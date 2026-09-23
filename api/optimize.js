@@ -28,9 +28,9 @@ export default async function handler(req, res) {
   const prompt = `
 You are a neutral sports betting-slip optimizer.
 
-Analyze ONLY the supplied selections.
+Analyze ONLY the selections supplied below.
 
-Produce exactly three profiles:
+Create exactly three profiles:
 
 SAFE
 BALANCED
@@ -43,20 +43,22 @@ BALANCED:
 Keep a moderate level of risk.
 
 RISKY:
-Allow more ambitious or higher-variance selections.
+Allow more ambitious and higher-variance selections.
 
 IMPORTANT RULES:
 
-1. Do not guarantee winning.
-2. Do not claim any selection is certain.
-3. Do not invent unrelated events.
+1. Never guarantee a win.
+2. Never say a selection is certain.
+3. Never invent a match or event.
 4. Only use the supplied events.
-5. You may change the market or pick only when the supplied event supports it.
-6. Briefly explain the overall strategy in each summary.
-7. Return valid JSON only.
-8. Keep all selections tied to the supplied events.
+5. Keep every recommendation tied to a supplied event.
+6. If you change a market or pick, it must be a realistic alternative for that same event.
+7. Keep the number of selections reasonable.
+8. Provide a short explanation for each profile.
+9. Return JSON only.
+10. This can contain football, rugby, or other sports. Analyze the supplied sport rather than assuming it is football.
 
-Use exactly this structure:
+Use exactly this JSON structure:
 
 {
   "SAFE": {
@@ -107,6 +109,7 @@ ${JSON.stringify(selections)}
     for (const profile of profiles) {
       if (
         !result?.[profile] ||
+        typeof result[profile].summary !== "string" ||
         !Array.isArray(result[profile].selections)
       ) {
         return res.status(502).json({
@@ -126,16 +129,19 @@ ${JSON.stringify(selections)}
   }
 }
 
+
 async function callGemini(prompt, apiKey) {
   const endpoint =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" +
     encodeURIComponent(apiKey);
 
   const response = await fetch(endpoint, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json"
     },
+
     body: JSON.stringify({
       contents: [
         {
@@ -146,6 +152,7 @@ async function callGemini(prompt, apiKey) {
           ]
         }
       ],
+
       generationConfig: {
         responseMimeType: "application/json"
       }
@@ -168,19 +175,25 @@ async function callGemini(prompt, apiKey) {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error("Gemini returned a non-JSON response.");
+    throw new Error(
+      "Gemini returned a non-JSON response."
+    );
   }
 
   const text =
     data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!text) {
-    throw new Error("Gemini returned no usable AI response.");
+    throw new Error(
+      "Gemini returned no usable AI response."
+    );
   }
 
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error("Gemini returned invalid JSON.");
+    throw new Error(
+      "Gemini returned invalid JSON."
+    );
   }
-    }
+}
