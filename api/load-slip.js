@@ -19,243 +19,120 @@ export default async function handler(req, res) {
     `https://www.sportybet.com/api/ng/orders/share/${encodeURIComponent(code)}`;
 
   try {
-
     const response = await fetch(url, {
       method: "GET",
-
       headers: {
-        "Accept": "application/json, text/plain, */*",
+        "Accept": "application/json",
+        "Current-Country": "NG",
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
-        "Referer": "https://www.sportybet.com/ng/",
-        "Origin": "https://www.sportybet.com"
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36"
       }
     });
 
-
-    /*
-      IMPORTANT:
-      Do NOT call response.json() immediately.
-
-      SportyBet may sometimes return HTML/text instead
-      of JSON. We read the response as text first.
-    */
-
     const raw = await response.text();
 
-    console.log(
-      "SportyBet response status:",
-      response.status
-    );
-
-    console.log(
-      "SportyBet response preview:",
-      raw.substring(0, 1000)
-    );
-
+    console.log("SportyBet status:", response.status);
+    console.log("SportyBet response:", raw.substring(0, 2000));
 
     if (!response.ok) {
-
       return res.status(502).json({
-        error:
-          "SportyBet returned HTTP " +
-          response.status +
-          "."
+        error: `SportyBet returned HTTP ${response.status}.`
       });
-
     }
 
-
-    let data = null;
-
-
-    /*
-      Try JSON safely.
-    */
+    let data;
 
     try {
-
       data = JSON.parse(raw);
-
-    } catch (jsonError) {
-
-      /*
-        The response wasn't JSON.
-
-        Instead of crashing with:
-        Unexpected token...
-
-        return a useful message.
-      */
-
+    } catch {
       return res.status(502).json({
         error:
-          "SportyBet returned an unexpected response. " +
-          "The booking code service may be temporarily unavailable."
+          "SportyBet returned a non-JSON response. The booking service may be temporarily unavailable."
       });
-
     }
 
-
     /*
-      Find the actual booking object.
+      SportyBet booking response structure:
 
-      Different SportyBet responses may place
-      the information in different locations.
+      {
+        data: {
+          outcomes: [...]
+        }
+      }
     */
 
-    const booking =
-      data?.data ||
-      data?.result ||
-      data?.data?.order ||
-      data?.result?.order ||
-      null;
-
+    const booking = data?.data;
 
     if (!booking) {
+      return res.status(404).json({
+        error: "No booking information was returned for this code."
+      });
+    }
 
+    const outcomes = Array.isArray(booking.outcomes)
+      ? booking.outcomes
+      : [];
+
+    if (outcomes.length === 0) {
       return res.status(404).json({
         error:
-          "SportyBet returned no booking information for this code."
+          "The booking was found, but SportyBet returned no selections."
       });
-
     }
 
+    const selections = outcomes.map((item) => {
+      const home =
+        item.homeTeamName ||
+        item.homeName ||
+        "";
 
-    /*
-      Try several possible selection containers.
-    */
+      const away =
+        item.awayTeamName ||
+        item.awayName ||
+        "";
 
-    let outcomes =
-      booking.outcomes ||
-      booking.selections ||
-      booking.bets ||
-      booking.items ||
-      [];
+      const event =
+        home && away
+          ? `${home} vs ${away}`
+          : item.eventName || "Unknown match";
 
+      const market =
+        item.marketDesc ||
+        item.marketName ||
+        item.market ||
+        "Unknown market";
 
-    if (!Array.isArray(outcomes)) {
-      outcomes = [];
-    }
+      const pick =
+        item.selectedOutcome ||
+        item.selectedOutcomeName ||
+        item.outcomeName ||
+        item.outcome ||
+        "Unknown pick";
 
+      const odds =
+        item.odds !== undefined && item.odds !== null
+          ? Number(item.odds)
+          : null;
 
-    /*
-      Convert SportyBet data into our
-      standard application format.
-    */
-
-    const selections = outcomes
-      .map((item) => {
-
-        const home =
-          item.homeTeamName ||
-          item.homeName ||
-          item.homeTeam ||
-          item.home ||
-          "";
-
-        const away =
-          item.awayTeamName ||
-          item.awayName ||
-          item.awayTeam ||
-          item.away ||
-          "";
-
-
-        const event =
-          item.eventName ||
-          item.matchName ||
-          (
-            home && away
-              ? `${home} vs ${away}`
-              : ""
-          );
-
-
-        const market =
-          item.marketDesc ||
-          item.marketName ||
-          item.market ||
-          item.betType ||
-          "";
-
-
-        const pick =
-          item.selectedOutcome ||
-          item.selectedOutcomeName ||
-          item.outcomeName ||
-          item.outcome ||
-          item.pick ||
-          item.selection ||
-          "";
-
-
-        let odds = null;
-
-
-        if (
-          item.odds !== undefined &&
-          item.odds !== null
-        ) {
-
-          const parsedOdds =
-            Number(item.odds);
-
-          if (!isNaN(parsedOdds)) {
-            odds = parsedOdds;
-          }
-
-        }
-
-
-        return {
-          event,
-          market,
-          pick,
-          odds
-        };
-
-      })
-      .filter(item => item.event);
-
-
-    /*
-      If we found the games but no usable
-      selection information, return the games
-      instead of crashing.
-    */
-
-    if (selections.length === 0) {
-
-      return res.status(404).json({
-        error:
-          "The booking code was found, but SportyBet did not provide readable selections."
-      });
-
-    }
-
-
-    return res.status(200).json({
-
-      shareCode: code,
-
-      selections
-
+      return {
+        event,
+        market,
+        pick,
+        odds: Number.isFinite(odds) ? odds : null
+      };
     });
 
+    return res.status(200).json({
+      shareCode: code,
+      selections
+    });
 
   } catch (error) {
-
-    console.error(
-      "SportyBet connection error:",
-      error
-    );
+    console.error("SportyBet connection error:", error);
 
     return res.status(500).json({
       error:
         "Unable to connect to SportyBet right now. Please try again."
     });
-
   }
-
 }
