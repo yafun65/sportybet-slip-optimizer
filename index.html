@@ -284,9 +284,9 @@
     /* PROFILE CARDS */
 
     .profiles {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .profile {
@@ -294,8 +294,7 @@
       background: #091f16;
       border: 1px solid #214635;
       border-radius: 16px;
-      padding: 15px 12px;
-      text-align: left;
+      padding: 15px;
       cursor: pointer;
       transition: .2s;
     }
@@ -310,47 +309,138 @@
       box-shadow: 0 0 0 2px rgba(53,201,130,.12);
     }
 
+    .profile-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+    }
+
     .profile-icon {
       font-size: 23px;
-      margin-bottom: 8px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .profile-heading {
+      flex: 1;
+      min-width: 0;
     }
 
     .profile h3 {
-      font-size: 15px;
+      font-size: 16px;
       margin-bottom: 5px;
     }
 
     .profile p {
       color: #849990;
-      font-size: 11px;
-      line-height: 1.4;
-      min-height: 48px;
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     .profile-stats {
-      margin-top: 12px;
-      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 13px;
+      padding-top: 11px;
       border-top: 1px solid #18382b;
       font-size: 11px;
       color: #a8bbb3;
     }
 
-    .profile-stats strong {
-      display: block;
+    .profile-stat-main strong {
       color: #eaf4ef;
       font-size: 16px;
-      margin-bottom: 2px;
+      margin-right: 3px;
+    }
+
+    .profile-combined {
+      color: #69e3a4;
+      font-weight: 700;
     }
 
     .profile-badge {
       display: inline-block;
-      margin-top: 9px;
       font-size: 10px;
       font-weight: 700;
-      padding: 4px 7px;
+      padding: 5px 7px;
       border-radius: 6px;
       background: #153629;
       color: #a8dfc2;
+      white-space: nowrap;
+    }
+
+    /* PROFILE SELECTION DETAILS */
+
+    .profile-selections {
+      margin-top: 13px;
+      padding-top: 13px;
+      border-top: 1px solid #18382b;
+    }
+
+    .profile-selections-title {
+      color: #9fb2aa;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .profile-selection-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .profile-selection {
+      background: #071a12;
+      border: 1px solid #193b2c;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .profile-selection-number {
+      color: #668077;
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .profile-selection-event {
+      color: #edf5f1;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 5px;
+    }
+
+    .profile-selection-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .profile-tag {
+      background: #143426;
+      color: #9fcab5;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .profile-tag.odds {
+      background: #123c28;
+      color: #69e3a4;
+      font-weight: 700;
+    }
+
+    .profile-empty {
+      color: #71877d;
+      font-size: 11px;
+      padding: 8px 0;
     }
 
     /* GENERATE */
@@ -466,26 +556,8 @@
         width: 100%;
       }
 
-      .profiles {
-        grid-template-columns: 1fr;
-      }
-
       .profile {
         padding: 14px;
-      }
-
-      .profile p {
-        min-height: auto;
-      }
-
-      .profile-stats {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .profile-badge {
-        margin-top: 0;
       }
 
       .summary-box strong {
@@ -494,6 +566,14 @@
 
       .code-value {
         font-size: 28px;
+      }
+
+      .profile-stats {
+        align-items: flex-start;
+      }
+
+      .profile-badge {
+        margin-top: 0;
       }
     }
   </style>
@@ -649,8 +729,8 @@
       </div>
 
       <div class="section-subtitle">
-        Select a profile based on how many selections and how much overall
-        variance you want in the generated booking.
+        Review the actual selections in each profile, then choose the
+        profile you want to use for your new booking.
       </div>
 
       <div class="profiles">
@@ -663,25 +743,52 @@
           onclick="selectProfile('SAFE')"
         >
 
-          <div class="profile-icon">
-            🟢
+          <div class="profile-header">
+
+            <div class="profile-icon">
+              🟢
+            </div>
+
+            <div class="profile-heading">
+
+              <h3>SAFE</h3>
+
+              <p id="safeSummary">
+                Fewer selections and lower overall variance.
+              </p>
+
+            </div>
+
           </div>
 
-          <h3>SAFE</h3>
-
-          <p id="safeSummary">
-            Fewer selections and lower overall variance.
-          </p>
-
           <div class="profile-stats">
-            <div>
+
+            <div class="profile-stat-main">
               <strong id="safeCount">0</strong>
               selections
+              <span> · </span>
+              <span class="profile-combined">
+                <span id="safeOdds">—</span> odds
+              </span>
             </div>
 
             <span class="profile-badge">
               LOWER VARIANCE
             </span>
+
+          </div>
+
+          <div class="profile-selections">
+
+            <div class="profile-selections-title">
+              Included selections
+            </div>
+
+            <div
+              id="safeSelections"
+              class="profile-selection-list"
+            ></div>
+
           </div>
 
         </div>
@@ -695,25 +802,52 @@
           onclick="selectProfile('BALANCED')"
         >
 
-          <div class="profile-icon">
-            🟡
+          <div class="profile-header">
+
+            <div class="profile-icon">
+              🟡
+            </div>
+
+            <div class="profile-heading">
+
+              <h3>BALANCED</h3>
+
+              <p id="balancedSummary">
+                A middle-ground selection profile.
+              </p>
+
+            </div>
+
           </div>
 
-          <h3>BALANCED</h3>
-
-          <p id="balancedSummary">
-            A middle-ground selection profile.
-          </p>
-
           <div class="profile-stats">
-            <div>
+
+            <div class="profile-stat-main">
               <strong id="balancedCount">0</strong>
               selections
+              <span> · </span>
+              <span class="profile-combined">
+                <span id="balancedOdds">—</span> odds
+              </span>
             </div>
 
             <span class="profile-badge">
               MODERATE
             </span>
+
+          </div>
+
+          <div class="profile-selections">
+
+            <div class="profile-selections-title">
+              Included selections
+            </div>
+
+            <div
+              id="balancedSelections"
+              class="profile-selection-list"
+            ></div>
+
           </div>
 
         </div>
@@ -727,25 +861,52 @@
           onclick="selectProfile('RISKY')"
         >
 
-          <div class="profile-icon">
-            🔴
+          <div class="profile-header">
+
+            <div class="profile-icon">
+              🔴
+            </div>
+
+            <div class="profile-heading">
+
+              <h3>RISKY</h3>
+
+              <p id="riskySummary">
+                More selections and higher overall variance.
+              </p>
+
+            </div>
+
           </div>
 
-          <h3>RISKY</h3>
-
-          <p id="riskySummary">
-            More selections and higher overall variance.
-          </p>
-
           <div class="profile-stats">
-            <div>
+
+            <div class="profile-stat-main">
               <strong id="riskyCount">0</strong>
               selections
+              <span> · </span>
+              <span class="profile-combined">
+                <span id="riskyOdds">—</span> odds
+              </span>
             </div>
 
             <span class="profile-badge">
               HIGHER VARIANCE
             </span>
+
+          </div>
+
+          <div class="profile-selections">
+
+            <div class="profile-selections-title">
+              Included selections
+            </div>
+
+            <div
+              id="riskySelections"
+              class="profile-selection-list"
+            ></div>
+
           </div>
 
         </div>
@@ -1025,6 +1186,10 @@
         extractSelections(data);
 
 
+      window.originalSelections =
+        selections;
+
+
       const count =
         selections.length;
 
@@ -1034,32 +1199,10 @@
       ).textContent = count;
 
 
-      let combinedOdds = 1;
-
-
-      for (const selection of selections) {
-
-        const odds =
-          Number(selection.odds);
-
-        if (
-          Number.isFinite(odds) &&
-          odds > 0
-        ) {
-
-          combinedOdds *= odds;
-
-        }
-
-      }
-
-
       document.getElementById(
         "combinedOdds"
       ).textContent =
-        Number.isFinite(combinedOdds)
-          ? combinedOdds.toFixed(2)
-          : "—";
+        formatCombinedOdds(selections);
 
 
       const list =
@@ -1069,6 +1212,19 @@
 
 
       list.innerHTML = "";
+
+
+      if (!selections.length) {
+
+        list.innerHTML = `
+          <div class="profile-empty">
+            No selections were found in this booking.
+          </div>
+        `;
+
+        return;
+
+      }
 
 
       selections.forEach(
@@ -1102,7 +1258,7 @@
           item.innerHTML = `
 
             <div class="selection-event">
-              ${escapeHtml(event)}
+              ${index + 1}. ${escapeHtml(event)}
             </div>
 
             <div class="selection-info">
@@ -1116,7 +1272,7 @@
               </span>
 
               <span class="tag odds">
-                ${escapeHtml(String(odds))}
+                @ ${escapeHtml(String(odds))}
               </span>
 
             </div>
@@ -1329,7 +1485,7 @@
 
 
         showStatus(
-          "Optimization complete. Choose a profile.",
+          "Optimization complete. Review the selections and choose a profile.",
           "success"
         );
 
@@ -1362,15 +1518,6 @@
 
     function getCurrentSelections() {
 
-      const cards =
-        document.querySelectorAll(
-          "#selectionList .selection"
-        );
-
-
-      // The original API response is stored here
-      // when available.
-
       if (
         window.originalSelections &&
         Array.isArray(
@@ -1402,42 +1549,62 @@
         profile => {
 
           const result =
-            data?.[profile];
+            data?.[profile] || {};
 
 
           const selections =
-            result?.selections || [];
+            Array.isArray(result.selections)
+              ? result.selections
+              : [];
 
 
-          const count =
-            selections.length;
+          const lowerProfile =
+            profile.toLowerCase();
 
 
           const countElement =
             document.getElementById(
-              profile.toLowerCase() +
-              "Count"
+              lowerProfile + "Count"
+            );
+
+
+          const oddsElement =
+            document.getElementById(
+              lowerProfile + "Odds"
             );
 
 
           const summaryElement =
             document.getElementById(
-              profile.toLowerCase() +
-              "Summary"
+              lowerProfile + "Summary"
+            );
+
+
+          const selectionsElement =
+            document.getElementById(
+              lowerProfile + "Selections"
             );
 
 
           if (countElement) {
 
             countElement.textContent =
-              count;
+              selections.length;
+
+          }
+
+
+          if (oddsElement) {
+
+            oddsElement.textContent =
+              formatCombinedOdds(selections);
 
           }
 
 
           if (
             summaryElement &&
-            typeof result?.summary === "string"
+            typeof result.summary === "string"
           ) {
 
             summaryElement.textContent =
@@ -1445,11 +1612,21 @@
 
           }
 
+
+          if (selectionsElement) {
+
+            renderProfileSelections(
+              selectionsElement,
+              selections
+            );
+
+          }
+
         }
       );
 
 
-      // Reset selection
+      // Reset selected profile
 
       document
         .querySelectorAll(".profile")
@@ -1468,15 +1645,167 @@
         .classList.remove("show");
 
 
-      selectedProfile = null;
-
-      generatedShareURL = null;
-
       document
         .getElementById(
           "generatedCodeBox"
         )
         .classList.remove("show");
+
+
+      selectedProfile = null;
+
+      generatedShareURL = null;
+
+    }
+
+
+    // =====================================================
+    // RENDER PROFILE SELECTIONS
+    // =====================================================
+
+    function renderProfileSelections(
+      container,
+      selections
+    ) {
+
+      container.innerHTML = "";
+
+
+      if (!selections.length) {
+
+        container.innerHTML = `
+          <div class="profile-empty">
+            No selections were returned for this profile.
+          </div>
+        `;
+
+        return;
+
+      }
+
+
+      selections.forEach(
+        (selection, index) => {
+
+          const event =
+            selection.event ||
+            "Unknown event";
+
+          const market =
+            selection.market ||
+            "Market";
+
+          const pick =
+            selection.pick ||
+            "Selection";
+
+          const odds =
+            selection.odds ||
+            "—";
+
+
+          const item =
+            document.createElement("div");
+
+
+          item.className =
+            "profile-selection";
+
+
+          item.innerHTML = `
+
+            <div class="profile-selection-number">
+              SELECTION ${index + 1}
+            </div>
+
+            <div class="profile-selection-event">
+              ${escapeHtml(event)}
+            </div>
+
+            <div class="profile-selection-details">
+
+              <span class="profile-tag">
+                ${escapeHtml(market)}
+              </span>
+
+              <span class="profile-tag">
+                ${escapeHtml(pick)}
+              </span>
+
+              <span class="profile-tag odds">
+                @ ${escapeHtml(String(odds))}
+              </span>
+
+            </div>
+
+          `;
+
+
+          container.appendChild(item);
+
+        }
+      );
+
+    }
+
+
+    // =====================================================
+    // COMBINED ODDS
+    // =====================================================
+
+    function formatCombinedOdds(
+      selections
+    ) {
+
+      if (
+        !Array.isArray(selections) ||
+        !selections.length
+      ) {
+
+        return "—";
+
+      }
+
+
+      let combinedOdds = 1;
+
+      let validOdds = 0;
+
+
+      for (
+        const selection
+        of selections
+      ) {
+
+        const odds =
+          Number(selection?.odds);
+
+
+        if (
+          Number.isFinite(odds) &&
+          odds > 0
+        ) {
+
+          combinedOdds *= odds;
+
+          validOdds++;
+
+        }
+
+      }
+
+
+      if (
+        validOdds !== selections.length ||
+        !Number.isFinite(combinedOdds)
+      ) {
+
+        return "—";
+
+      }
+
+
+      return combinedOdds.toFixed(2);
 
     }
 
@@ -1534,12 +1863,18 @@
         .classList.add("selected");
 
 
+      const combinedOdds =
+        formatCombinedOdds(
+          selections
+        );
+
+
       document
         .getElementById(
           "selectedProfileName"
         )
         .textContent =
-        `${profile} • ${selections.length} selections`;
+        `${profile} • ${selections.length} selections • ${combinedOdds} combined odds`;
 
 
       document
@@ -1857,30 +2192,6 @@
 
 
     // =====================================================
-    // KEEP ORIGINAL SELECTIONS FOR AI
-    // =====================================================
-
-    const originalDisplayFunction =
-      displayOriginalSlip;
-
-
-    displayOriginalSlip =
-      function(data) {
-
-        const selections =
-          extractSelections(data);
-
-
-        window.originalSelections =
-          selections;
-
-
-        originalDisplayFunction(data);
-
-      };
-
-
-    // =====================================================
     // ENTER KEY
     // =====================================================
 
@@ -1904,4 +2215,4 @@
   </script>
 
 </body>
-          </html>
+  </html>
