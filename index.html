@@ -259,3 +259,658 @@
       color: #607067;
       font-size: 11px;
       line-height: 1.5;
+      padding: 10px 15px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 400px) {
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+
+  <div class="header">
+
+    <div class="ball">⚽</div>
+
+    <h1>
+      SportyBet <span>Slip Optimizer</span>
+    </h1>
+
+    <p>
+      Enter your booking code and let AI create
+      different ways to approach your slip.
+    </p>
+
+  </div>
+
+
+  <!-- ENTER CODE -->
+
+  <div class="card">
+
+    <div class="card-title">
+      Enter Booking Code
+    </div>
+
+    <div class="card-text">
+      Paste the booking code from your SportyBet slip below.
+    </div>
+
+    <input
+      id="code"
+      type="text"
+      maxlength="20"
+      placeholder="e.g. LDC709"
+      autocomplete="off"
+    >
+
+    <button
+      class="green"
+      id="loadButton"
+      onclick="loadSlip()"
+    >
+      Analyze Slip
+    </button>
+
+    <div
+      class="loading"
+      id="loadingLoad"
+    >
+      Loading your slip...
+    </div>
+
+    <div
+      class="error"
+      id="error"
+    ></div>
+
+  </div>
+
+
+  <!-- ORIGINAL SLIP -->
+
+  <div
+    class="card hidden"
+    id="loadedSection"
+  >
+
+    <div class="card-title">
+      Your Slip
+    </div>
+
+    <div id="slipInfo"></div>
+
+    <button
+      class="green"
+      id="optimizeButton"
+      onclick="optimizeSlip()"
+    >
+      Optimize My Slip
+    </button>
+
+    <div
+      class="loading"
+      id="loadingOptimize"
+    >
+      AI is analyzing your selections...
+    </div>
+
+  </div>
+
+
+  <!-- RESULTS -->
+
+  <div
+    class="card hidden"
+    id="resultsSection"
+  >
+
+    <div class="card-title">
+      Optimization Results
+    </div>
+
+    <div class="card-text">
+      Compare the three approaches and choose the one
+      that matches your risk preference.
+    </div>
+
+    <div id="results"></div>
+
+  </div>
+
+
+  <div class="footer">
+    SAFE means lower variance, not guaranteed.
+    BALANCED uses moderate variance.
+    RISKY uses higher variance.
+    <br><br>
+    This tool does not guarantee betting outcomes.
+    Bet responsibly.
+  </div>
+
+</div>
+
+
+<script>
+
+let loadedSlip = null;
+
+
+/* LOAD SLIP */
+
+async function loadSlip() {
+
+  const code =
+    document.getElementById("code").value.trim();
+
+  hideError();
+
+  if (!code) {
+    showError("Please enter your SportyBet booking code.");
+    return;
+  }
+
+  const button =
+    document.getElementById("loadButton");
+
+  button.disabled = true;
+
+  button.textContent = "Loading...";
+
+  document.getElementById(
+    "loadingLoad"
+  ).style.display = "block";
+
+
+  try {
+
+    const response = await fetch(
+      "/api/load-slip",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          code: code
+        })
+      }
+    );
+
+
+    const data = await response.json();
+
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Unable to load the slip."
+      );
+    }
+
+
+    if (
+      !data.selections ||
+      data.selections.length === 0
+    ) {
+      throw new Error(
+        "No selections were found."
+      );
+    }
+
+
+    loadedSlip = data;
+
+    displaySlip(data);
+
+  }
+
+  catch (error) {
+
+    showError(error.message);
+
+  }
+
+  finally {
+
+    button.disabled = false;
+
+    button.textContent = "Analyze Slip";
+
+    document.getElementById(
+      "loadingLoad"
+    ).style.display = "none";
+
+  }
+
+}
+
+
+/* DISPLAY SLIP */
+
+function displaySlip(data) {
+
+  const container =
+    document.getElementById("slipInfo");
+
+  container.innerHTML = "";
+
+
+  const top =
+    document.createElement("div");
+
+  top.className = "slip-top";
+
+  top.innerHTML = `
+    <span>
+      Code:
+      <span class="slip-code">
+        ${escapeHtml(data.shareCode || "")}
+      </span>
+    </span>
+
+    <span class="count">
+      ${data.selections.length} selections
+    </span>
+  `;
+
+  container.appendChild(top);
+
+
+  data.selections.forEach(
+    (selection, index) => {
+
+      const div =
+        document.createElement("div");
+
+      div.className = "selection";
+
+      div.innerHTML = `
+
+        <div class="event">
+          ${index + 1}.
+          ${escapeHtml(
+            selection.event ||
+            "Unknown event"
+          )}
+        </div>
+
+        <div class="market">
+          ${escapeHtml(
+            selection.market ||
+            "Market unavailable"
+          )}
+        </div>
+
+        <div class="pick">
+          Pick:
+          ${escapeHtml(
+            selection.pick ||
+            "Unavailable"
+          )}
+        </div>
+
+        ${
+          selection.odds !== null &&
+          selection.odds !== undefined &&
+          !isNaN(selection.odds)
+          ? `
+            <div class="odds">
+              Odds: ${selection.odds}
+            </div>
+          `
+          : ""
+        }
+
+      `;
+
+      container.appendChild(div);
+
+    }
+  );
+
+
+  document
+    .getElementById("loadedSection")
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById("resultsSection")
+    .classList.add("hidden");
+
+}
+
+
+/* OPTIMIZE */
+
+async function optimizeSlip() {
+
+  if (
+    !loadedSlip ||
+    !loadedSlip.selections ||
+    loadedSlip.selections.length === 0
+  ) {
+    showError("Please load a slip first.");
+    return;
+  }
+
+
+  hideError();
+
+
+  const button =
+    document.getElementById(
+      "optimizeButton"
+    );
+
+  button.disabled = true;
+
+  button.textContent = "Analyzing...";
+
+
+  document.getElementById(
+    "loadingOptimize"
+  ).style.display = "block";
+
+
+  try {
+
+    const response = await fetch(
+      "/api/optimize",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          selections:
+            loadedSlip.selections
+        })
+      }
+    );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Optimization failed."
+      );
+    }
+
+
+    displayResults(data);
+
+  }
+
+  catch (error) {
+
+    showError(error.message);
+
+  }
+
+  finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Optimize My Slip";
+
+    document.getElementById(
+      "loadingOptimize"
+    ).style.display = "none";
+
+  }
+
+}
+
+
+/* RESULTS */
+
+function displayResults(data) {
+
+  const container =
+    document.getElementById("results");
+
+  container.innerHTML = "";
+
+
+  const descriptions = {
+
+    SAFE:
+      "Lower-variance approach",
+
+    BALANCED:
+      "Moderate-risk approach",
+
+    RISKY:
+      "Higher-variance approach"
+
+  };
+
+
+  ["SAFE", "BALANCED", "RISKY"]
+    .forEach(profile => {
+
+      if (!data[profile]) return;
+
+
+      const div =
+        document.createElement("div");
+
+      div.className = "profile";
+
+
+      let html = `
+
+        <div class="profile-name">
+          ${profile}
+        </div>
+
+        <div class="profile-description">
+
+          ${descriptions[profile]}
+
+          <br>
+
+          ${escapeHtml(
+            data[profile].summary || ""
+          )}
+
+        </div>
+
+      `;
+
+
+      if (
+        Array.isArray(
+          data[profile].selections
+        )
+      ) {
+
+        data[profile]
+          .selections
+          .forEach(
+            (selection, index) => {
+
+              html += `
+
+                <div class="result-pick">
+
+                  <strong>
+                    ${index + 1}.
+                    ${escapeHtml(
+                      selection.event || ""
+                    )}
+                  </strong>
+
+                  <br>
+
+                  <span style="color:#7f9187;">
+                    ${escapeHtml(
+                      selection.market || ""
+                    )}
+                  </span>
+
+                  <div class="result-choice">
+
+                    Pick:
+                    ${escapeHtml(
+                      selection.pick || ""
+                    )}
+
+                  </div>
+
+                </div>
+
+              `;
+
+            }
+          );
+
+      }
+
+
+      html += `
+
+        <button
+          class="dark-button"
+          onclick="copyProfile(this)"
+        >
+          Copy ${profile}
+        </button>
+
+      `;
+
+
+      div.innerHTML = html;
+
+      container.appendChild(div);
+
+    });
+
+
+  document
+    .getElementById("resultsSection")
+    .classList.remove("hidden");
+
+}
+
+
+/* COPY */
+
+function copyProfile(button) {
+
+  const profile =
+    button.closest(".profile");
+
+  navigator.clipboard
+    .writeText(profile.innerText)
+    .then(() => {
+
+      const original =
+        button.textContent;
+
+      button.textContent =
+        "Copied ✓";
+
+      setTimeout(() => {
+
+        button.textContent =
+          original;
+
+      }, 2000);
+
+    });
+
+}
+
+
+/* ERROR */
+
+function showError(message) {
+
+  const error =
+    document.getElementById("error");
+
+  error.textContent =
+    message;
+
+  error.style.display =
+    "block";
+
+}
+
+
+function hideError() {
+
+  document.getElementById(
+    "error"
+  ).style.display =
+    "none";
+
+}
+
+
+/* SECURITY */
+
+function escapeHtml(value) {
+
+  return String(value)
+
+    .replace(/&/g, "&amp;")
+
+    .replace(/</g, "&lt;")
+
+    .replace(/>/g, "&gt;")
+
+    .replace(/"/g, "&quot;")
+
+    .replace(/'/g, "&#039;");
+
+}
+
+
+/* ENTER KEY */
+
+document
+  .getElementById("code")
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (event.key === "Enter") {
+        loadSlip();
+      }
+
+    }
+  );
+
+</script>
+
+</body>
+</html>
