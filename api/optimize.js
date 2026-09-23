@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   const prompt = `
 You are a neutral sports betting-slip optimizer.
 
-Analyze ONLY the selections supplied below.
+Analyze ONLY the supplied selections.
 
 Create exactly three profiles:
 
@@ -52,13 +52,12 @@ IMPORTANT RULES:
 3. Never invent a match or event.
 4. Only use the supplied events.
 5. Keep every recommendation tied to a supplied event.
-6. If you change a market or pick, it must be a realistic alternative for that same event.
-7. Keep the number of selections reasonable.
-8. Provide a short explanation for each profile.
+6. If changing a market or pick, it must be realistic for that same event.
+7. Do not assume the sport is football.
+8. Analyze the actual sport supplied.
 9. Return JSON only.
-10. This can contain football, rugby, or other sports. Analyze the supplied sport rather than assuming it is football.
 
-Use exactly this JSON structure:
+Use exactly this structure:
 
 {
   "SAFE": {
@@ -102,7 +101,7 @@ ${JSON.stringify(selections)}
 `;
 
   try {
-    const result = await callGemini(prompt, apiKey);
+    const result = await callGeminiWithRetry(prompt, apiKey);
 
     const profiles = ["SAFE", "BALANCED", "RISKY"];
 
@@ -130,9 +129,42 @@ ${JSON.stringify(selections)}
 }
 
 
+async function callGeminiWithRetry(prompt, apiKey) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await callGemini(prompt, apiKey);
+
+    } catch (error) {
+      console.error(
+        `Gemini attempt ${attempt} failed:`,
+        error.message
+      );
+
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+
+      // Wait progressively longer before retrying.
+      const delay =
+        attempt === 1
+          ? 1500
+          : attempt === 2
+            ? 3000
+            : 6000;
+
+      await new Promise(resolve =>
+        setTimeout(resolve, delay)
+      );
+    }
+  }
+}
+
+
 async function callGemini(prompt, apiKey) {
   const endpoint =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" +
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" +
     encodeURIComponent(apiKey);
 
   const response = await fetch(endpoint, {
@@ -161,8 +193,10 @@ async function callGemini(prompt, apiKey) {
 
   const raw = await response.text();
 
-  console.log("Gemini HTTP status:", response.status);
-  console.log("Gemini response:", raw);
+  console.log(
+    "Gemini HTTP status:",
+    response.status
+  );
 
   if (!response.ok) {
     throw new Error(
