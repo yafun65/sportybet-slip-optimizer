@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SportyBet Slip Optimizer</title>
+
+  <style>
+    :root {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #e5e7eb;
+      background: #0b1220;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #0b1220, #111827);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: auto;
+      padding: 28px 16px 50px;
+    }
+
+    .brand {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin: 6px 0 26px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #263244;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .primary {
+      background: #22c55e;
+      color: #052e16;
+    }
+
+    .secondary {
+      background: #334155;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+    }
+
+    .selection {
+      padding: 12px 0;
+      border-bottom: 1px solid #243044;
+    }
+
+    .selection:last-child {
+      border-bottom: 0;
+    }
+
+    .muted {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .profiles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .profile {
+      border: 1px solid #334155;
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .profile:hover {
+      border-color: #22c55e;
+    }
+
+    .profile.active {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
+
+    .profile h3 {
+      margin: 0 0 7px;
+    }
+
+    .profile p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .notice {
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 650px) {
+      .profiles {
+        grid-template-columns: 1fr;
+      }
+
+      .brand {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand">
+    ⚽ SportyBet Slip Optimizer
+  </div>
+
+  <div class="subtitle">
+    Analyze a SportyBet sharing code and compare three risk profiles.
+  </div>
+
+
+  <!-- LOAD SLIP -->
+
+  <div class="card">
+
+    <label for="code">
+      SportyBet Sharing Code
+    </label>
+
+    <input
+      id="code"
+      placeholder="e.g. PCHZL1"
+      autocomplete="off"
+    />
+
+    <button
+      id="loadBtn"
+      class="primary"
+    >
+      Load Slip
+    </button>
+
+    <div
+      id="loadStatus"
+      class="status"
+    ></div>
+
+  </div>
+
+
+  <!-- LOADED SLIP -->
+
+  <div
+    id="slipCard"
+    class="card hidden"
+  >
+
+    <h2>
+      Loaded Selections
+    </h2>
+
+    <div id="selections"></div>
+
+    <button
+      id="optBtn"
+      class="primary"
+    >
+      Analyze Slip
+    </button>
+
+    <div
+      id="optStatus"
+      class="status"
+    ></div>
+
+  </div>
+
+
+  <!-- PROFILES -->
+
+  <div
+    id="profilesCard"
+    class="card hidden"
+  >
+
+    <h2>
+      Choose an Optimization Profile
+    </h2>
+
+    <div
+      class="profiles"
+      id="profiles"
+    ></div>
+
+    <div
+      id="chosen"
+      class="status"
+    ></div>
+
+  </div>
+
+
+  <!-- RESULT -->
+
+  <div
+    id="resultCard"
+    class="card hidden"
+  >
+
+    <h2>
+      Optimized Slip
+    </h2>
+
+    <div id="result"></div>
+
+    <button
+      id="copyBtn"
+      class="secondary"
+    >
+      Copy Selections
+    </button>
+
+    <p class="notice">
+      This tool compares different risk profiles.
+      It does not guarantee winning outcomes and does not
+      create a fake bookmaker booking code.
+    </p>
+
+  </div>
+
+
+  <!-- RESPONSIBLE BETTING -->
+
+  <div class="card notice">
+
+    <strong>
+      Responsible use:
+    </strong>
+
+    Betting involves financial risk.
+    Only stake money you can afford to lose and follow
+    applicable laws and bookmaker rules.
+
+  </div>
+
+</div>
+
+
+<script>
+
+let loadedSlip = null;
+let optimization = null;
+let selectedProfile = null;
+
+
+const $ = (id) => {
+  return document.getElementById(id);
+};
+
+
+function show(id) {
+  $(id).classList.remove("hidden");
+}
+
+
+function hide(id) {
+  $(id).classList.add("hidden");
+}
+
+
+function escapeHtml(value) {
+
+  return String(value).replace(
+    /[&<>"']/g,
+    function(character) {
+
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[character];
+
+    }
+  );
+
+}
+
+
+function renderSelections(selections) {
+
+  $("selections").innerHTML = selections.map(
+    function(selection, index) {
+
+      return `
+        <div class="selection">
+
+          <strong>
+            ${index + 1}.
+            ${escapeHtml(selection.event || "Unknown event")}
+          </strong>
+
+          <div>
+            ${escapeHtml(selection.market || "")}:
+            <b>
+              ${escapeHtml(selection.pick || "")}
+            </b>
+          </div>
+
+          <div class="muted">
+            Odds:
+            ${escapeHtml(String(selection.odds ?? "N/A"))}
+
+            ${
+              selection.date
+                ? " · " + escapeHtml(selection.date)
+                : ""
+            }
+
+          </div>
+
+        </div>
+      `;
+
+    }
+  ).join("");
+
+}
+
+
+function renderProfiles(data) {
+
+  const order = [
+    "SAFE",
+    "BALANCED",
+    "RISKY"
+  ];
+
+
+  $("profiles").innerHTML = order.map(
+    function(name) {
+
+      const profile = data[name] || {};
+
+      return `
+        <div
+          class="profile"
+          data-profile="${name}"
+        >
+
+          <h3>
+            ${name}
+          </h3>
+
+          <p>
+            ${escapeHtml(
+              profile.summary ||
+              "No summary provided."
+            )}
+          </p>
+
+          <div
+            class="muted"
+            style="margin-top:8px"
+          >
+            Selections:
+            ${(profile.selections || []).length}
+          </div>
+
+        </div>
+      `;
+
+    }
+  ).join("");
+
+
+  document
+    .querySelectorAll(".profile")
+    .forEach(function(element) {
+
+      element.onclick = function() {
+
+        document
+          .querySelectorAll(".profile")
+          .forEach(function(item) {
+            item.classList.remove("active");
+          });
+
+
+        element.classList.add("active");
+
+
+        selectedProfile =
+          element.dataset.profile;
+
+
+        $("chosen").textContent =
+          "Selected: " + selectedProfile;
+
+
+        renderResult(
+          data[selectedProfile]
+        );
+
+      };
+
+    });
+
+}
+
+
+function renderResult(profile) {
+
+  if (!profile) {
+    return;
+  }
+
+
+  show("resultCard");
+
+
+  $("result").innerHTML = `
+
+    <p>
+      <strong>
+        ${escapeHtml(
+          profile.summary || ""
+        )}
+      </strong>
+    </p>
+
+
+    ${(profile.selections || []).map(
+      function(selection, index) {
+
+        return `
+
+          <div class="selection">
+
+            <strong>
+              ${index + 1}.
+              ${escapeHtml(
+                selection.event || ""
+              )}
+            </strong>
+
+            <div>
+              ${escapeHtml(
+                selection.market || ""
+              )}:
+
+              <b>
+                ${escapeHtml(
+                  selection.pick || ""
+                )}
+              </b>
+            </div>
+
+            <div class="muted">
+              Odds:
+              ${escapeHtml(
+                String(
+                  selection.odds ?? "N/A"
+                )
+              )}
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("")}
+
+  `;
+
+}
+
+
+/* LOAD SPORTYBET SLIP */
+
+$("loadBtn").onclick = async function() {
+
+  const code =
+    $("code").value.trim();
+
+
+  if (!code) {
+
+    $("loadStatus").textContent =
+      "Enter a SportyBet sharing code.";
+
+    return;
+
+  }
+
+
+  $("loadBtn").disabled = true;
+
+  $("loadStatus").textContent =
+    "Loading slip…";
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/load-slip",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            code: code
+          })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Could not load slip."
+      );
+
+    }
+
+
+    loadedSlip = data;
+
+
+    renderSelections(
+      data.selections || []
+    );
+
+
+    show("slipCard");
+
+
+    $("loadStatus").textContent =
+      `Loaded ${
+        (data.selections || []).length
+      } selection(s).`;
+
+
+    hide("profilesCard");
+    hide("resultCard");
+
+
+  } catch (error) {
+
+    $("loadStatus").textContent =
+      error.message;
+
+  } finally {
+
+    $("loadBtn").disabled = false;
+
+  }
+
+};
+
+
+/* AI OPTIMIZATION */
+
+$("optBtn").onclick = async function() {
+
+  if (!loadedSlip) {
+    return;
+  }
+
+
+  $("optBtn").disabled = true;
+
+  $("optStatus").textContent =
+    "AI is analyzing the selections…";
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/optimize",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            selections:
+              loadedSlip.selections
+          })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Optimization failed."
+      );
+
+    }
+
+
+    optimization = data;
+
+
+    renderProfiles(data);
+
+
+    show("profilesCard");
+
+
+    $("optStatus").textContent =
+      "Choose a profile above.";
+
+
+  } catch (error) {
+
+    $("optStatus").textContent =
+      error.message;
+
+  } finally {
+
+    $("optBtn").disabled = false;
+
+  }
+
+};
+
+
+/* COPY RESULT */
+
+$("copyBtn").onclick = function() {
+
+  if (
+    !selectedProfile ||
+    !optimization ||
+    !optimization[selectedProfile]
+  ) {
+
+    return;
+
+  }
+
+
+  const text =
+    optimization[selectedProfile]
+      .selections
+      .map(function(selection, index) {
+
+        return `${index + 1}. ${
+          selection.event
+        } — ${
+          selection.market
+        }: ${
+          selection.pick
+        } (odds ${
+          selection.odds ?? "N/A"
+        })`;
+
+      })
+      .join("\n");
+
+
+  if (navigator.clipboard) {
+
+    navigator.clipboard.writeText(text);
+
+  }
+
+
+  $("chosen").textContent =
+    `${selectedProfile} selections copied.`;
+
+};
+
+</script>
+
+</body>
+  </html>
