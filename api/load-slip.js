@@ -5,7 +5,31 @@ export default async function handler(req, res) {
     });
   }
 
-  const code = String(req.body?.code || "").trim();
+  const input = String(req.body?.code || "").trim();
+
+  if (!input) {
+    return res.status(400).json({
+      error: "Paste a SportyBet sharing code or share link."
+    });
+  }
+
+  // Accept either:
+  // LDC709
+  // or https://www.sportybet.com/ng/?shareCode=LDC709
+  let code = input;
+
+  try {
+    if (input.includes("sportybet.com")) {
+      const url = new URL(input);
+      code = url.searchParams.get("shareCode") || "";
+    }
+  } catch {
+    return res.status(400).json({
+      error: "The SportyBet link is not valid."
+    });
+  }
+
+  code = code.trim();
 
   if (!/^[A-Za-z0-9._-]{4,40}$/.test(code)) {
     return res.status(400).json({
@@ -13,22 +37,44 @@ export default async function handler(req, res) {
     });
   }
 
-  const url =
+  const shareUrl =
     `https://www.sportybet.com/ng/?shareCode=${encodeURIComponent(code)}`;
 
   try {
-    const page = await fetch(url, {
+    const response = await fetch(shareUrl, {
+      method: "GET",
+      redirect: "follow",
       headers: {
-        "User-Agent": "Mozilla/5.0"
-      },
-      redirect: "follow"
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language":
+          "en-US,en;q=0.9"
+      }
     });
 
-    const html = await page.text();
+    const html = await response.text();
 
-    if (!page.ok) {
+    // SportyBet is blocking the server request.
+    if (response.status === 403) {
+      return res.status(403).json({
+        error:
+          "SportyBet blocked the server request (HTTP 403). The sharing link is valid, but SportyBet is preventing our server from reading the page."
+      });
+    }
+
+    if (!response.ok) {
       return res.status(502).json({
-        error: `SportyBet returned HTTP ${page.status}.`
+        error:
+          `SportyBet returned HTTP ${response.status}.`
+      });
+    }
+
+    if (!html || html.length < 100) {
+      return res.status(422).json({
+        error:
+          "SportyBet returned an empty or unreadable page."
       });
     }
 
@@ -36,14 +82,18 @@ export default async function handler(req, res) {
 
     if (!apiKey) {
       return res.status(500).json({
-        error: "Gemini API key is not configured."
+        error:
+          "Gemini API key is not configured."
       });
     }
 
     const prompt = `
-Extract football betting selections from this publicly accessible SportyBet share page.
+You are extracting football betting selections from a SportyBet
+public sharing page.
 
-Return JSON only in this format:
+Return JSON ONLY.
+
+Required format:
 
 {
   "selections": [
@@ -59,44 +109,49 @@ Return JSON only in this format:
 
 Rules:
 
-1. Do not invent selections.
-2. Only use information actually present in the page.
-3. If selections cannot be found, return:
+1. Only extract selections actually present in the supplied page.
+2. Do not invent matches.
+3. Do not invent odds.
+4. Do not add unrelated football matches.
+5. If no selections can be identified, return:
    {"selections":[]}
 
-Page content:
+SportyBet share code:
+${code}
 
+Page content:
 ${html.slice(0, 60000)}
 `;
 
-    const aiResult =
+    const result =
       await callGemini(prompt, apiKey);
 
     const selections =
-      Array.isArray(aiResult?.selections)
-        ? aiResult.selections
+      Array.isArray(result?.selections)
+        ? result.selections
         : [];
 
     if (!selections.length) {
       return res.status(422).json({
         error:
-          "The SportyBet share page could not be read. SportyBet may require JavaScript or may have changed its page format."
+          "The page was reached, but no readable selections were found."
       });
     }
 
     return res.status(200).json({
       platform: "SportyBet",
       code,
+      shareUrl,
       selections
     });
 
   } catch (error) {
 
-    console.error(error);
+    console.error("LOAD SLIP ERROR:", error);
 
     return res.status(500).json({
       error:
-        "Unable to load the SportyBet slip right now."
+        "Unable to retrieve the SportyBet slip."
     });
   }
 }
@@ -110,7 +165,6 @@ async function callGemini(prompt, apiKey) {
 
   const response =
     await fetch(endpoint, {
-
       method: "POST",
 
       headers: {
@@ -119,7 +173,6 @@ async function callGemini(prompt, apiKey) {
       },
 
       body: JSON.stringify({
-
         contents: [
           {
             parts: [
@@ -134,25 +187,18 @@ async function callGemini(prompt, apiKey) {
           responseMimeType:
             "application/json"
         }
-
       })
-
     });
-
 
   const data =
     await response.json();
 
-
   if (!response.ok) {
-
     throw new Error(
       data?.error?.message ||
       "Gemini request failed."
     );
-
   }
-
 
   const text =
     data?.candidates?.[0]
@@ -160,6 +206,5 @@ async function callGemini(prompt, apiKey) {
       ?.parts?.[0]
       ?.text || "{}";
 
-
   return JSON.parse(text);
-}
+      }
