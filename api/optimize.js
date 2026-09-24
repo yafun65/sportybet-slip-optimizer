@@ -341,12 +341,14 @@ in the VERIFIED SPORTYBET MARKETS.
 12. Do not create an outcome.
 
 13. If an event has no VERIFIED SPORTYBET MARKETS, do not invent a recommendation for that event.
-
-14. AI RECOMMENDED MUST contain exactly ONE selection for EVERY UNIQUE EVENT in the ORIGINAL SELECTIONS, as long as that event has VERIFIED SPORTYBET MARKETS.
+14. AI RECOMMENDED should contain EXACTLY ONE selection for EVERY UNIQUE EVENT that has VERIFIED SPORTYBET MARKETS.
 15. There must never be more than ONE AI RECOMMENDED selection for the same event.
-16. If a unique event from the ORIGINAL SELECTIONS has no VERIFIED SPORTYBET MARKETS, do not invent a recommendation for that event. The backend will report the missing event.
-17. The number of AI RECOMMENDED selections should normally equal the number of unique events in the ORIGINAL SELECTIONS.
-18. For each event, choose either the original selection or one alternative that actually exists in the VERIFIED SPORTYBET MARKETS.
+16. If an event has no VERIFIED SPORTYBET MARKETS, DO NOT invent a recommendation for it.
+17. Never skip an event that has verified SportyBet markets.
+18. For every verified event, choose either the original selection or ONE alternative that actually exists in the VERIFIED SPORTYBET MARKETS.
+19. If there are 4 unique games and all 4 have verified markets, AI RECOMMENDED MUST contain 4 selections.
+20. If there are 8 unique games and all 8 have verified markets, AI RECOMMENDED MUST contain 8 selections.
+21. The number of AI RECOMMENDED selections should match the number of verified unique games.
 
 =====================================================
 OUTPUT FORMAT
@@ -568,27 +570,19 @@ const missingVerifiedEvents =
       !verifiedEventIds.has(eventId)
   );
 
-if (missingVerifiedEvents.length > 0) {
-
-  return res.status(502).json({
-    error:
-      "SportyBet markets could not be verified for one or more games.",
-    missingEventIds:
-      missingVerifiedEvents
-  });
-
 }
 
 if (
   recommendedSelections.length !==
-  uniqueOriginalEventIds.length
+  verifiedEvents.length
 ) {
 
   return res.status(502).json({
     error:
-      `AI RECOMMENDED must contain exactly one recommendation for each game. Expected ${uniqueOriginalEventIds.length}, but AI returned ${recommendedSelections.length}.`
+      `AI RECOMMENDED must contain exactly one recommendation for each verified game. Expected ${verifiedEvents.length}, but AI returned ${recommendedSelections.length}.`
   });
 
+}
 }
 
 const recommendedEventIds =
