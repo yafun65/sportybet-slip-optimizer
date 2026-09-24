@@ -606,7 +606,9 @@ if (
 
 }
 
-for (const eventId of uniqueOriginalEventIds) {
+for (
+  const eventId of verifiedEventIds
+)  {
 
   if (
     !uniqueRecommendedEventIds.has(eventId)
