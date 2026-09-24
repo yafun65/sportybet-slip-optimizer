@@ -342,17 +342,11 @@ in the VERIFIED SPORTYBET MARKETS.
 
 13. If an event has no VERIFIED SPORTYBET MARKETS, do not invent a recommendation for that event.
 
-14. AI RECOMMENDED does not have to contain every event.
-
-15. Prefer a smaller number of selections when the available alternatives provide a clearer lower-variance profile.
-
-16. Give one short neutral reason for every selection.
-
-17. Keep each reason to ONE sentence.
-
-18. The reason should describe relative variance, market characteristics, odds, or why the selection fits the profile.
-
-19. Return JSON only.
+14. AI RECOMMENDED MUST contain exactly ONE selection for EVERY UNIQUE EVENT in the ORIGINAL SELECTIONS, as long as that event has VERIFIED SPORTYBET MARKETS.
+15. There must never be more than ONE AI RECOMMENDED selection for the same event.
+16. If a unique event from the ORIGINAL SELECTIONS has no VERIFIED SPORTYBET MARKETS, do not invent a recommendation for that event. The backend will report the missing event.
+17. The number of AI RECOMMENDED selections should normally equal the number of unique events in the ORIGINAL SELECTIONS.
+18. For each event, choose either the original selection or one alternative that actually exists in the VERIFIED SPORTYBET MARKETS.
 
 =====================================================
 OUTPUT FORMAT
