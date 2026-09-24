@@ -1,612 +1,421 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#071a12">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>SportyBet Selection Optimizer</title>
 
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
     }
 
     body {
+      margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #071a12;
-      color: #f5f7f6;
-      min-height: 100vh;
-    }
-
-    button,
-    input {
-      font: inherit;
+      background: #f4f6f8;
+      color: #17202a;
     }
 
     .container {
-      width: 100%;
-      max-width: 760px;
-      margin: auto;
-      padding: 18px 14px 50px;
+      width: min(1100px, 94%);
+      margin: 0 auto;
+      padding: 30px 0 60px;
     }
 
     .header {
       text-align: center;
-      padding: 24px 10px 20px;
-    }
-
-    .logo {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 14px;
-      border-radius: 18px;
-      background: #0f6b43;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 30px;
-      box-shadow: 0 8px 25px rgba(0,0,0,.25);
+      margin-bottom: 30px;
     }
 
     .header h1 {
-      font-size: 27px;
-      line-height: 1.15;
-      margin-bottom: 9px;
+      margin: 0 0 8px;
+      font-size: 32px;
+      font-weight: 800;
     }
 
     .header p {
-      color: #a9b8b1;
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 500px;
-      margin: auto;
+      margin: 0;
+      color: #667085;
+      font-size: 15px;
     }
 
     .card {
-      background: #0d251b;
-      border: 1px solid #183a2c;
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      background: #fff;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
     }
 
-    .section-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 5px;
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 21px;
     }
 
-    .section-subtitle {
-      color: #91a69d;
-      font-size: 13px;
-      line-height: 1.45;
-      margin-bottom: 16px;
-    }
-
-    .input-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      color: #c8d4cf;
-      margin-bottom: 8px;
+    .card-description {
+      color: #667085;
+      font-size: 14px;
+      margin: 0 0 18px;
     }
 
     .input-row {
       display: flex;
-      gap: 9px;
+      gap: 10px;
     }
 
-    .code-input {
+    input[type="text"] {
       flex: 1;
       min-width: 0;
-      background: #071a12;
-      border: 1px solid #28503e;
-      color: white;
-      border-radius: 12px;
-      padding: 14px;
+      height: 50px;
+      border: 1px solid #d0d5dd;
+      border-radius: 10px;
+      padding: 0 15px;
+      font-size: 16px;
       outline: none;
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 1px;
     }
 
-    .code-input:focus {
-      border-color: #24b875;
-      box-shadow: 0 0 0 3px rgba(36,184,117,.1);
+    input[type="text"]:focus {
+      border-color: #1877f2;
+      box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.12);
     }
 
-    .btn {
+    button {
       border: 0;
-      border-radius: 12px;
-      padding: 13px 17px;
-      cursor: pointer;
+      border-radius: 10px;
+      padding: 0 20px;
+      min-height: 48px;
+      font-size: 15px;
       font-weight: 700;
-      transition: .2s;
-    }
-
-    .btn:active {
-      transform: scale(.98);
-    }
-
-    .btn-primary {
-      background: #18a965;
+      cursor: pointer;
+      background: #1877f2;
       color: white;
     }
 
-    .btn-primary:hover {
-      background: #20bc73;
+    button:hover {
+      opacity: 0.94;
     }
 
-    .btn-secondary {
-      background: #163a2a;
-      color: #bcebd5;
-      border: 1px solid #285740;
-    }
-
-    .btn-secondary:hover {
-      background: #1c4935;
-    }
-
-    .btn:disabled {
-      opacity: .55;
+    button:disabled {
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
-    .example {
-      margin-top: 9px;
-      color: #71877d;
-      font-size: 12px;
+    .secondary-btn {
+      background: #17202a;
     }
 
-    .status {
+    .success-btn {
+      background: #16803c;
+    }
+
+    .message {
       display: none;
+      margin-top: 15px;
       padding: 12px 14px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      line-height: 1.45;
+      border-radius: 9px;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
-    .status.show {
+    .message.show {
       display: block;
     }
 
-    .status.loading {
-      background: #102d20;
-      border: 1px solid #24573e;
-      color: #b9d9ca;
+    .message.error {
+      background: #fff1f0;
+      color: #b42318;
+      border: 1px solid #fecdca;
     }
 
-    .status.error {
-      background: #351717;
-      border: 1px solid #6b3030;
-      color: #ffb4b4;
+    .message.success {
+      background: #ecfdf3;
+      color: #027a48;
+      border: 1px solid #abefc6;
     }
 
-    .status.success {
-      background: #123322;
-      border: 1px solid #276444;
-      color: #aee7c8;
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #667085;
     }
 
-    .summary-row {
-      display: flex;
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border: 3px solid #d0d5dd;
+      border-top-color: #1877f2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .selections-list {
+      display: grid;
       gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .summary-box {
-      flex: 1;
-      background: #071a12;
-      border: 1px solid #193b2c;
-      border-radius: 12px;
-      padding: 13px;
-    }
-
-    .summary-box span {
-      display: block;
-      color: #81958c;
-      font-size: 11px;
-      margin-bottom: 5px;
-    }
-
-    .summary-box strong {
-      font-size: 18px;
-    }
-
-    .selection-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
     }
 
     .selection {
-      background: #091f16;
-      border: 1px solid #183b2c;
-      border-radius: 13px;
-      padding: 13px;
+      border: 1px solid #e4e7ec;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fafafa;
     }
 
-    .selection-event {
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.4;
-      margin-bottom: 7px;
-    }
-
-    .selection-info {
+    .selection-top {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
     }
 
-    .tag {
-      background: #143426;
-      color: #a9d8c0;
-      border-radius: 7px;
-      padding: 5px 8px;
-      font-size: 11px;
-    }
-
-    .tag.odds {
-      background: #123c28;
-      color: #69e3a4;
+    .event-name {
       font-weight: 700;
-    }
-
-    .optimize-box {
-      text-align: center;
-    }
-
-    .optimize-box .btn {
-      width: 100%;
-      padding: 15px;
       font-size: 15px;
     }
 
+    .odds {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .selection-market {
+      font-size: 14px;
+      color: #344054;
+      margin-bottom: 4px;
+    }
+
+    .selection-pick {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .selection-meta {
+      margin-top: 7px;
+      color: #98a2b3;
+      font-size: 11px;
+      word-break: break-all;
+    }
+
     .profiles {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
     }
 
     .profile {
-      position: relative;
-      background: #091f16;
-      border: 1px solid #214635;
-      border-radius: 16px;
-      padding: 15px;
+      border: 2px solid #e4e7ec;
+      border-radius: 15px;
+      padding: 18px;
       cursor: pointer;
-      transition: .2s;
+      transition: 0.2s ease;
+      background: #fff;
     }
 
     .profile:hover {
-      transform: translateY(-2px);
-      border-color: #347457;
+      border-color: #98a2b3;
+      transform: translateY(-1px);
     }
 
     .profile.selected {
-      border-color: #35c982;
-      box-shadow: 0 0 0 2px rgba(53,201,130,.12);
-    }
-
-    .profile-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 11px;
-    }
-
-    .profile-icon {
-      font-size: 23px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .profile-heading {
-      flex: 1;
-      min-width: 0;
+      border-color: #1877f2;
+      box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
     }
 
     .profile h3 {
-      font-size: 16px;
-      margin-bottom: 5px;
+      margin: 0 0 7px;
+      font-size: 18px;
     }
 
-    .profile p {
-      color: #849990;
-      font-size: 12px;
+    .profile-summary {
+      color: #667085;
+      font-size: 13px;
       line-height: 1.45;
+      min-height: 38px;
     }
 
     .profile-stats {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-top: 13px;
-      padding-top: 11px;
-      border-top: 1px solid #18382b;
+      gap: 8px;
+      margin: 15px 0;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 9px;
+    }
+
+    .stat {
+      text-align: center;
+      flex: 1;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 19px;
+    }
+
+    .stat span {
+      display: block;
+      color: #667085;
       font-size: 11px;
-      color: #a8bbb3;
-    }
-
-    .profile-stat-main strong {
-      color: #eaf4ef;
-      font-size: 16px;
-      margin-right: 3px;
-    }
-
-    .profile-combined {
-      color: #69e3a4;
-      font-weight: 700;
-    }
-
-    .profile-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 5px 7px;
-      border-radius: 6px;
-      background: #153629;
-      color: #a8dfc2;
-      white-space: nowrap;
-    }
-
-    .profile-ai {
-      border-color: #315a48;
-      background:
-        linear-gradient(
-          180deg,
-          #0b251a 0%,
-          #091f16 100%
-        );
-    }
-
-    .profile-ai.selected {
-      border-color: #4ce39a;
-      box-shadow:
-        0 0 0 2px rgba(76,227,154,.15),
-        0 10px 30px rgba(24,169,101,.08);
-    }
-
-    .ai-badge {
-      background: #194b34;
-      color: #70edaa;
-    }
-
-    .verified-note {
-      margin-top: 9px;
-      padding: 8px 9px;
-      border-radius: 8px;
-      background: #102d20;
-      border: 1px solid #22523a;
-      color: #8fc8aa;
-      font-size: 10px;
-      line-height: 1.4;
+      margin-top: 3px;
     }
 
     .profile-selections {
-      margin-top: 13px;
-      padding-top: 13px;
-      border-top: 1px solid #18382b;
-    }
-
-    .profile-selections-title {
-      color: #9fb2aa;
-      font-size: 11px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-    }
-
-    .profile-selection-list {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .profile-selection {
-      background: #071a12;
-      border: 1px solid #193b2c;
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    .profile-selection-number {
-      color: #668077;
-      font-size: 10px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .profile-selection-event {
-      color: #edf5f1;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.4;
-      margin-bottom: 5px;
-    }
-
-    .profile-selection-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-
-    .profile-tag {
-      background: #143426;
-      color: #9fcab5;
-      border-radius: 6px;
-      padding: 4px 6px;
-      font-size: 10px;
-      line-height: 1.25;
-    }
-
-    .profile-tag.odds {
-      background: #123c28;
-      color: #69e3a4;
-      font-weight: 700;
-    }
-
-    .profile-tag.ai-market {
-      background: #183d2c;
-      color: #73e7a8;
-    }
-
-    .profile-selection-reason {
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #173529;
-      color: #8fa59b;
-      font-size: 10px;
-      line-height: 1.5;
-    }
-
-    .profile-selection-reason strong {
-      color: #b8cbc3;
-      font-size: 10px;
-    }
-
-    .profile-empty {
-      color: #71877d;
-      font-size: 11px;
-      padding: 8px 0;
-    }
-
-    .generate-box {
       display: none;
+      margin-top: 15px;
     }
 
-    .generate-box.show {
+    .profile.selected .profile-selections {
       display: block;
     }
 
-    .selected-profile {
-      background: #071a12;
-      border: 1px solid #234936;
-      border-radius: 13px;
-      padding: 13px;
-      margin-bottom: 13px;
+    .profile-selection {
+      border-top: 1px solid #eaecf0;
+      padding: 10px 0;
     }
 
-    .selected-profile-label {
-      color: #82968d;
-      font-size: 11px;
+    .profile-selection:first-child {
+      border-top: 0;
+    }
+
+    .profile-selection .game {
+      font-size: 13px;
+      font-weight: 700;
       margin-bottom: 4px;
     }
 
-    .selected-profile-name {
-      font-size: 18px;
-      font-weight: 700;
+    .profile-selection .pick {
+      font-size: 12px;
+      color: #475467;
+    }
+
+    .profile-selection .reason {
+      font-size: 12px;
+      color: #667085;
+      margin-top: 4px;
       line-height: 1.4;
+    }
+
+    .no-selections {
+      color: #98a2b3;
+      font-size: 13px;
+      padding: 8px 0;
+    }
+
+    #resultsSection,
+    #generateSection {
+      display: none;
+    }
+
+    #resultsSection.show,
+    #generateSection.show {
+      display: block;
+    }
+
+    .generate-content {
+      text-align: center;
+    }
+
+    .generate-content p {
+      color: #667085;
+      font-size: 14px;
+      margin-top: 0;
     }
 
     .generated-code {
       display: none;
-      margin-top: 15px;
+      margin-top: 18px;
+      padding: 18px;
+      background: #f8fafc;
+      border-radius: 12px;
       text-align: center;
-      background: #071a12;
-      border: 1px solid #276044;
-      border-radius: 16px;
-      padding: 20px 14px;
     }
 
     .generated-code.show {
       display: block;
     }
 
-    .generated-label {
-      color: #89a297;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
     .code-value {
-      font-size: 34px;
-      font-weight: 800;
-      letter-spacing: 4px;
-      color: #55e69a;
-      margin-bottom: 15px;
-      word-break: break-all;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin: 8px 0 16px;
+      word-break: break-word;
     }
 
     .code-actions {
       display: flex;
-      gap: 8px;
-    }
-
-    .code-actions .btn {
-      flex: 1;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .small-note {
-      margin-top: 13px;
-      color: #71857d;
-      font-size: 11px;
+      color: #98a2b3;
+      font-size: 12px;
+      margin-top: 14px;
       line-height: 1.5;
     }
 
-    footer {
-      text-align: center;
-      color: #526960;
-      font-size: 11px;
+    .verification {
+      margin-top: 18px;
+      padding: 13px;
+      background: #f8fafc;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #667085;
       line-height: 1.5;
-      padding: 10px 10px 30px;
+    }
+
+    @media (max-width: 850px) {
+      .profiles {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 600px) {
-
       .container {
-        padding: 10px 10px 40px;
-      }
-
-      .header {
-        padding: 20px 8px 18px;
+        width: 92%;
+        padding-top: 22px;
       }
 
       .header h1 {
-        font-size: 24px;
-      }
-
-      .card {
-        padding: 15px;
-        border-radius: 15px;
+        font-size: 26px;
       }
 
       .input-row {
         flex-direction: column;
       }
 
-      .input-row .btn {
+      .input-row button {
         width: 100%;
       }
 
-      .profile {
-        padding: 14px;
+      .profiles {
+        grid-template-columns: 1fr;
       }
 
-      .summary-box strong {
-        font-size: 16px;
+      .card {
+        padding: 17px;
       }
 
-      .code-value {
-        font-size: 28px;
-      }
-
-      .profile-stats {
+      .selection-top {
         align-items: flex-start;
-      }
-
-      .profile-badge {
-        margin-top: 0;
-      }
-
-      .code-actions {
-        flex-direction: column;
       }
     }
   </style>
@@ -614,368 +423,260 @@
 
 <body>
 
-  <main class="container">
+  <div class="container">
 
     <header class="header">
-
-      <div class="logo">
-        ⚽
-      </div>
-
       <h1>SportyBet Selection Optimizer</h1>
-
-      <p>
-        Analyze your SportyBet selections and create
-        different variance profiles from your booking.
-      </p>
-
+      <p>Analyze your selections and create different ways to build your ticket.</p>
     </header>
 
+    <!-- LOAD BOOKING -->
     <section class="card">
+      <h2>Load Your Selections</h2>
 
-      <div class="section-title">
-        Enter Booking Code
-      </div>
-
-      <div class="section-subtitle">
-        Enter your SportyBet booking code to load all the selections.
-      </div>
-
-      <label class="input-label" for="bookingCode">
-        SportyBet Booking Code
-      </label>
+      <p class="card-description">
+        Enter your SportyBet booking code to load the selections from your ticket.
+      </p>
 
       <div class="input-row">
-
         <input
-          id="bookingCode"
-          class="code-input"
           type="text"
-          placeholder="ENTER CODE"
-          maxlength="20"
+          id="bookingCode"
+          placeholder="Enter SportyBet booking code"
           autocomplete="off"
-        >
+          maxlength="20"
+        />
 
-        <button
-          id="analyzeBtn"
-          class="btn btn-primary"
-          onclick="loadSlip()"
-        >
-          Analyze Selections
+        <button id="loadButton" type="button">
+          Load Selections
         </button>
-
       </div>
 
-      <div class="example">
-        Example: GWF3U9
-      </div>
+      <div id="loadMessage" class="message"></div>
 
+      <div id="loadLoading" class="loading">
+        <span class="spinner"></span>
+        Loading selections...
+      </div>
     </section>
 
-    <div id="status" class="status"></div>
+    <!-- ORIGINAL SELECTIONS -->
+    <section id="originalSection" class="card" style="display:none;">
+      <h2>Your Selections</h2>
 
-    <section
-      id="originalSection"
-      class="card"
-      style="display:none;"
-    >
+      <p class="card-description">
+        These are the selections currently attached to your SportyBet booking code.
+      </p>
 
-      <div class="section-title">
-        Your Selections
+      <div id="originalSelections" class="selections-list"></div>
+
+      <div style="margin-top:20px;">
+        <button id="optimizeButton" type="button">
+          Optimize My Selections
+        </button>
       </div>
 
-      <div class="section-subtitle">
-        These are the selections currently contained in your SportyBet booking.
+      <div id="optimizeMessage" class="message"></div>
+
+      <div id="optimizeLoading" class="loading">
+        <span class="spinner"></span>
+        Analyzing your selections...
       </div>
-
-      <div class="summary-row">
-
-        <div class="summary-box">
-          <span>SELECTIONS</span>
-          <strong id="selectionCount">0</strong>
-        </div>
-
-        <div class="summary-box">
-          <span>COMBINED ODDS</span>
-          <strong id="combinedOdds">—</strong>
-        </div>
-
-      </div>
-
-      <div
-        id="selectionList"
-        class="selection-list"
-      ></div>
-
     </section>
 
-    <section
-      id="optimizeSection"
-      class="card optimize-box"
-      style="display:none;"
-    >
+    <!-- RESULTS -->
+    <section id="resultsSection" class="card">
 
-      <div class="section-title">
-        Optimize Your Selections
-      </div>
+      <h2>Optimized Selections</h2>
 
-      <div class="section-subtitle">
-        AI will analyze your original selections and, where verified
-        SportyBet markets are available, consider alternative markets.
-      </div>
-
-      <button
-        id="optimizeBtn"
-        class="btn btn-primary"
-        onclick="optimizeSlip()"
-      >
-        Optimize My Selections
-      </button>
-
-    </section>
-
-    <section
-      id="resultsSection"
-      class="card"
-      style="display:none;"
-    >
-
-      <div class="section-title">
-        Choose Your Profile
-      </div>
-
-      <div class="section-subtitle">
-        Review the actual selections and the reason for each selection,
-        then choose the profile you want to use for your new booking.
-      </div>
+      <p class="card-description">
+        Choose a profile to see the selections included in that version.
+      </p>
 
       <div class="profiles">
 
+        <!-- SAFE -->
         <div
-          id="profile-SAFE"
           class="profile"
-          onclick="selectProfile('SAFE')"
+          id="safeProfile"
+          data-profile="SAFE"
         >
+          <h3>SAFE</h3>
 
-          <div class="profile-header">
-
-            <div class="profile-icon">
-              🟢
-            </div>
-
-            <div class="profile-heading">
-
-              <h3>SAFE</h3>
-
-              <p id="safeSummary">
-                Fewer selections and lower overall variance.
-              </p>
-
-            </div>
-
+          <div id="safeSummary" class="profile-summary">
+            Fewer selections and lower overall variance.
           </div>
 
           <div class="profile-stats">
-
-            <div class="profile-stat-main">
+            <div class="stat">
               <strong id="safeCount">0</strong>
-              selections
-              <span> · </span>
-              <span class="profile-combined">
-                <span id="safeOdds">—</span> odds
-              </span>
+              <span>Selections</span>
             </div>
 
-            <span class="profile-badge">
-              LOWER VARIANCE
-            </span>
-
-          </div>
-
-          <div class="profile-selections">
-
-            <div class="profile-selections-title">
-              Included selections
+            <div class="stat">
+              <strong id="safeOdds">—</strong>
+              <span>Combined Odds</span>
             </div>
-
-            <div
-              id="safeSelections"
-              class="profile-selection-list"
-            ></div>
-
           </div>
 
+          <div
+            id="safeSelections"
+            class="profile-selections"
+          ></div>
         </div>
 
+        <!-- BALANCED -->
         <div
-          id="profile-BALANCED"
           class="profile"
-          onclick="selectProfile('BALANCED')"
+          id="balancedProfile"
+          data-profile="BALANCED"
         >
+          <h3>BALANCED</h3>
 
-          <div class="profile-header">
-
-            <div class="profile-icon">
-              🟡
-            </div>
-
-            <div class="profile-heading">
-
-              <h3>BALANCED</h3>
-
-              <p id="balancedSummary">
-                A middle-ground mix — not too cautious, not too aggressive.
-              </p>
-
-            </div>
-
+          <div id="balancedSummary" class="profile-summary">
+            A middle-ground selection profile.
           </div>
 
           <div class="profile-stats">
-
-            <div class="profile-stat-main">
+            <div class="stat">
               <strong id="balancedCount">0</strong>
-              selections
-              <span> · </span>
-              <span class="profile-combined">
-                <span id="balancedOdds">—</span> odds
-              </span>
+              <span>Selections</span>
             </div>
 
-            <span class="profile-badge">
-              MODERATE
-            </span>
-
-          </div>
-
-          <div class="profile-selections">
-
-            <div class="profile-selections-title">
-              Included selections
+            <div class="stat">
+              <strong id="balancedOdds">—</strong>
+              <span>Combined Odds</span>
             </div>
-
-            <div
-              id="balancedSelections"
-              class="profile-selection-list"
-            ></div>
-
           </div>
 
+          <div
+            id="balancedSelections"
+            class="profile-selections"
+          ></div>
         </div>
 
+        <!-- RISKY -->
         <div
-          id="profile-RISKY"
           class="profile"
-          onclick="selectProfile('RISKY')"
+          id="riskyProfile"
+          data-profile="RISKY"
         >
+          <h3>RISKY</h3>
 
-          <div class="profile-header">
-
-            <div class="profile-icon">
-              🔴
-            </div>
-
-            <div class="profile-heading">
-
-              <h3>RISKY</h3>
-
-              <p id="riskySummary">
-                More selections and higher overall variance.
-              </p>
-
-            </div>
-
+          <div id="riskySummary" class="profile-summary">
+            More selections and higher overall variance.
           </div>
 
           <div class="profile-stats">
-
-            <div class="profile-stat-main">
+            <div class="stat">
               <strong id="riskyCount">0</strong>
-              selections
-              <span> · </span>
-              <span class="profile-combined">
-                <span id="riskyOdds">—</span> odds
-              </span>
+              <span>Selections</span>
             </div>
 
-            <span class="profile-badge">
-              HIGHER VARIANCE
-            </span>
-
-          </div>
-
-          <div class="profile-selections">
-
-            <div class="profile-selections-title">
-              Included selections
+            <div class="stat">
+              <strong id="riskyOdds">—</strong>
+              <span>Combined Odds</span>
             </div>
-
-            <div
-              id="riskySelections"
-              class="profile-selection-list"
-            ></div>
-
           </div>
 
+          <div
+            id="riskySelections"
+            class="profile-selections"
+          ></div>
         </div>
 
+        <!-- AI RECOMMENDED -->
         <div
-          id="profile-AI RECOMMENDED"
-          class="profile profile-ai"
-          onclick="selectProfile('AI RECOMMENDED')"
+          class="profile"
+          id="aiRecommendedProfile"
+          data-profile="AI RECOMMENDED"
         >
+          <h3>AI RECOMMENDED</h3>
 
-          <div class="profile-header">
-
-            <div class="profile-icon">
-              🤖
-            </div>
-
-            <div class="profile-heading">
-
-              <h3>AI RECOMMENDED</h3>
-
-              <p id="aiRecommendedSummary">
-                AI-selected alternatives based on verified SportyBet markets.
-              </p>
-
-            </div>
-
+          <div id="aiRecommendedSummary" class="profile-summary">
+            AI-selected alternatives based on verified SportyBet markets.
           </div>
 
           <div class="profile-stats">
-
-            <div class="profile-stat-main">
+            <div class="stat">
               <strong id="aiRecommendedCount">0</strong>
-              selections
-              <span> · </span>
-              <span class="profile-combined">
-                <span id="aiRecommendedOdds">—</span> odds
-              </span>
+              <span>Selections</span>
             </div>
 
-            <span class="profile-badge ai-badge">
-              AI + VERIFIED
-            </span>
+            <div class="stat">
+              <strong id="aiRecommendedOdds">—</strong>
+              <span>Combined Odds</span>
+            </div>
+          </div>
+
+          <div
+            id="aiRecommendedSelections"
+            class="profile-selections"
+          ></div>
+        </div>
+
+      </div>
+
+      <div id="verificationBox" class="verification" style="display:none;"></div>
+
+    </section>
+
+    <!-- GENERATE -->
+    <section id="generateSection" class="card">
+
+      <div class="generate-content">
+
+        <h2>Generate SportyBet Code</h2>
+
+        <p>
+          Select one of the profiles above, then generate a new SportyBet booking code.
+        </p>
+
+        <button
+          id="generateButton"
+          class="success-btn"
+          type="button"
+        >
+          Generate SportyBet Code
+        </button>
+
+        <div id="generateMessage" class="message"></div>
+
+        <div id="generateLoading" class="loading">
+          <span class="spinner"></span>
+          Creating SportyBet booking...
+        </div>
+
+        <div id="generatedCodeBox" class="generated-code">
+
+          <div>Generated SportyBet Code</div>
+
+          <div id="generatedCode" class="code-value">
+            —
+          </div>
+
+          <div class="code-actions">
+
+            <button
+              id="copyCodeButton"
+              class="secondary-btn"
+              type="button"
+            >
+              Copy Code
+            </button>
+
+            <button
+              id="openBookingButton"
+              type="button"
+            >
+              Open SportyBet
+            </button>
 
           </div>
 
-          <div class="verified-note">
-            AI Recommended can use alternative markets, but only when
-            the market and outcome have been verified against SportyBet data.
-          </div>
-
-          <div class="profile-selections">
-
-            <div class="profile-selections-title">
-              AI recommended selections
-            </div>
-
-            <div
-              id="aiRecommendedSelections"
-              class="profile-selection-list"
-            ></div>
-
+          <div class="small-note">
+            This creates a SportyBet booking/share code from the selected
+            verified selections. It does not place a bet automatically.
           </div>
 
         </div>
@@ -984,582 +685,525 @@
 
     </section>
 
-    <section
-      id="generateSection"
-      class="card generate-box"
-    >
+  </div>
 
-      <div class="section-title">
-        Generate SportyBet Code
-      </div>
-
-      <div class="section-subtitle">
-        Generate a new shareable SportyBet booking code using the
-        selections from your chosen profile.
-      </div>
-
-      <div class="selected-profile">
-
-        <div class="selected-profile-label">
-          SELECTED PROFILE
-        </div>
-
-        <div
-          id="selectedProfileName"
-          class="selected-profile-name"
-        >
-          —
-        </div>
-
-      </div>
-
-      <button
-        id="generateBtn"
-        class="btn btn-primary"
-        style="width:100%;"
-        onclick="generateBooking()"
-      >
-        Generate SportyBet Code
-      </button>
-
-      <div
-        id="generatedCodeBox"
-        class="generated-code"
-      >
-
-        <div class="generated-label">
-          YOUR SPORTYBET BOOKING CODE
-        </div>
-
-        <div
-          id="generatedCode"
-          class="code-value"
-        >
-          —
-        </div>
-
-        <div class="code-actions">
-
-          <button
-            id="copyBtn"
-            class="btn btn-secondary"
-            onclick="copyCode()"
-          >
-            Copy Code
-          </button>
-
-          <button
-            id="openBtn"
-            class="btn btn-primary"
-            onclick="openSportyBet()"
-          >
-            Open SportyBet
-          </button>
-
-        </div>
-
-        <div class="small-note">
-          This creates a shareable SportyBet booking code.
-          It does not place a bet automatically.
-        </div>
-
-      </div>
-
-    </section>
-
-    <footer>
-      SportyBet Selection Optimizer<br>
-      Profiles describe selection variance and are not guarantees of results.
-    </footer>
-
-  </main>
 
   <script>
 
+    /* =========================================================
+       GLOBAL STATE
+    ========================================================= */
+
+    let selections = [];
     let optimizedData = null;
     let selectedProfile = null;
     let generatedShareURL = null;
 
 
-    // =====================================================
-    // STATUS
-    // =====================================================
+    /* =========================================================
+       DOM HELPERS
+    ========================================================= */
 
-    function showStatus(message, type = "loading") {
-
-      const status =
-        document.getElementById("status");
-
-      status.textContent = message;
-
-      status.className =
-        "status show " + type;
-
+    function $(id) {
+      return document.getElementById(id);
     }
 
 
-    function hideStatus() {
+    function showMessage(element, message, type = "error") {
+      if (!element) return;
 
-      const status =
-        document.getElementById("status");
-
-      status.className = "status";
-
-      status.textContent = "";
-
+      element.textContent = message;
+      element.className = "message show " + type;
     }
 
 
-    // =====================================================
-    // LOAD SPORTYBET SELECTIONS
-    // =====================================================
+    function hideMessage(element) {
+      if (!element) return;
+
+      element.className = "message";
+      element.textContent = "";
+    }
+
+
+    function setLoading(element, show) {
+      if (!element) return;
+
+      element.classList.toggle("show", show);
+    }
+
+
+    /* =========================================================
+       FORMAT ODDS
+    ========================================================= */
+
+    function formatCombinedOdds(items) {
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return "—";
+      }
+
+      let total = 1;
+      let validOdds = 0;
+
+      for (const item of items) {
+
+        const odds = Number(
+          item?.odds ??
+          item?.odd ??
+          item?.price
+        );
+
+        if (Number.isFinite(odds) && odds > 0) {
+          total *= odds;
+          validOdds++;
+        }
+      }
+
+      if (validOdds === 0) {
+        return "—";
+      }
+
+      return total.toFixed(2);
+    }
+
+
+    /* =========================================================
+       LOAD SPORTYBET BOOKING
+    ========================================================= */
 
     async function loadSlip() {
 
-      const input =
-        document.getElementById("bookingCode");
+      const input = $("bookingCode");
+      const code = String(input?.value || "")
+        .trim()
+        .toUpperCase();
 
-      const button =
-        document.getElementById("analyzeBtn");
-
-      const code =
-        input.value.trim().toUpperCase();
-
+      hideMessage($("loadMessage"));
 
       if (!code) {
-
-        showStatus(
-          "Please enter a SportyBet booking code.",
-          "error"
+        showMessage(
+          $("loadMessage"),
+          "Please enter a SportyBet booking code."
         );
-
         return;
-
       }
 
+      if (!/^[A-Z0-9]{4,20}$/.test(code)) {
+        showMessage(
+          $("loadMessage"),
+          "Please enter a valid SportyBet booking code."
+        );
+        return;
+      }
 
-      button.disabled = true;
+      $("loadButton").disabled = true;
+      setLoading($("loadLoading"), true);
 
-      button.textContent = "Loading...";
-
-
-      showStatus(
-        "Loading your selections...",
-        "loading"
-      );
-
+      $("originalSection").style.display = "none";
+      $("resultsSection").classList.remove("show");
+      $("generateSection").classList.remove("show");
 
       try {
 
-        const response =
-          await fetch("/api/load-slip", {
+        const response = await fetch("/api/load-slip", {
+          method: "POST",
 
-            method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-            headers: {
-              "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-              code
-            })
-
-          });
+          body: JSON.stringify({
+            code: code
+          })
+        });
 
 
-        const raw =
-          await response.text();
+        const raw = await response.text();
 
         let data;
 
         try {
+          data = JSON.parse(raw);
+        } catch (error) {
 
-          data =
-            JSON.parse(raw);
-
-        } catch (_) {
+          console.error(
+            "Non-JSON response from load API:",
+            raw
+          );
 
           throw new Error(
             raw ||
             "The server returned an unexpected response."
           );
-
         }
 
 
-        if (!response.ok) {
+        if (!response.ok || data?.success === false) {
 
           throw new Error(
-            data.error ||
-            "Unable to load the booking code."
+            data?.error ||
+            "Unable to load the SportyBet booking."
           );
-
         }
 
 
-        displayOriginalSlip(data);
+        selections = extractSelections(data);
 
 
-        document
-          .getElementById("originalSection")
-          .style.display = "block";
+        if (!selections.length) {
+
+          throw new Error(
+            "The booking was loaded, but no selections were found."
+          );
+        }
 
 
-        document
-          .getElementById("optimizeSection")
-          .style.display = "block";
+        displayOriginalSlip(selections);
 
+        $("originalSection").style.display = "block";
 
-        document
-          .getElementById("resultsSection")
-          .style.display = "none";
-
-
-        document
-          .getElementById("generateSection")
-          .classList.remove("show");
-
-
-        optimizedData = null;
-        selectedProfile = null;
-        generatedShareURL = null;
-
-
-        showStatus(
-          "Selections loaded successfully.",
+        showMessage(
+          $("loadMessage"),
+          `${selections.length} selection${selections.length === 1 ? "" : "s"} loaded successfully.`,
           "success"
         );
 
-
       } catch (error) {
 
-        console.error(error);
+        console.error("Load booking error:", error);
 
-        showStatus(
-          error.message ||
-          "Unable to load selections.",
-          "error"
+        showMessage(
+          $("loadMessage"),
+          error?.message ||
+          "Unable to load the SportyBet booking."
         );
 
       } finally {
 
-        button.disabled = false;
-
-        button.textContent =
-          "Analyze Selections";
-
+        $("loadButton").disabled = false;
+        setLoading($("loadLoading"), false);
       }
-
     }
 
 
-    // =====================================================
-    // DISPLAY ORIGINAL SELECTIONS
-    // =====================================================
-
-    function displayOriginalSlip(data) {
-
-      const selections =
-        extractSelections(data);
-
-
-      window.originalSelections =
-        selections;
-
-
-      document.getElementById(
-        "selectionCount"
-      ).textContent =
-        selections.length;
-
-
-      document.getElementById(
-        "combinedOdds"
-      ).textContent =
-        formatCombinedOdds(selections);
-
-
-      const list =
-        document.getElementById(
-          "selectionList"
-        );
-
-
-      list.innerHTML = "";
-
-
-      if (!selections.length) {
-
-        list.innerHTML = `
-          <div class="profile-empty">
-            No selections were found in this booking.
-          </div>
-        `;
-
-        return;
-
-      }
-
-
-      selections.forEach(
-        (selection, index) => {
-
-          const event =
-            selection.event ||
-            "Unknown event";
-
-          const market =
-            selection.market ||
-            "Market";
-
-          const pick =
-            selection.pick ||
-            "Selection";
-
-          const odds =
-            selection.odds ||
-            "—";
-
-
-          const item =
-            document.createElement("div");
-
-
-          item.className =
-            "selection";
-
-
-          item.innerHTML = `
-
-            <div class="selection-event">
-              ${index + 1}. ${escapeHtml(event)}
-            </div>
-
-            <div class="selection-info">
-
-              <span class="tag">
-                ${escapeHtml(market)}
-              </span>
-
-              <span class="tag">
-                ${escapeHtml(pick)}
-              </span>
-
-              <span class="tag odds">
-                @ ${escapeHtml(String(odds))}
-              </span>
-
-            </div>
-
-          `;
-
-
-          list.appendChild(item);
-
-        }
-      );
-
-    }
-
-
-    // =====================================================
-    // EXTRACT SELECTIONS
-    // =====================================================
+    /* =========================================================
+       EXTRACT SELECTIONS
+    ========================================================= */
 
     function extractSelections(data) {
 
-      if (
-        Array.isArray(data?.selections)
-      ) {
+      let outcomes = [];
 
-        return data.selections;
+      if (Array.isArray(data?.outcomes)) {
+        outcomes = data.outcomes;
+      }
 
+      else if (Array.isArray(data?.data?.outcomes)) {
+        outcomes = data.data.outcomes;
+      }
+
+      else if (Array.isArray(data?.booking?.data?.outcomes)) {
+        outcomes = data.booking.data.outcomes;
+      }
+
+      else if (Array.isArray(data?.data?.data?.outcomes)) {
+        outcomes = data.data.data.outcomes;
       }
 
 
-      if (
-        Array.isArray(
-          data?.booking?.data?.outcomes
-        )
-      ) {
-
-        return data.booking.data.outcomes.map(
-          item => {
-
-            const event =
-              item.event || {};
-
-            const markets =
-              event.markets || [];
-
-            const marketObject =
-              markets[0] || {};
-
-            const outcomeObject =
-              marketObject.outcomes?.[0] ||
-              {};
+      const result = [];
 
 
-            return {
+      for (const item of outcomes) {
+
+        const event = item?.event || {};
+
+        const markets =
+          Array.isArray(item?.markets)
+            ? item.markets
+            : [];
+
+
+        /*
+          Some SportyBet responses may contain the selection
+          directly on the outcome object.
+        */
+
+        if (
+          item?.eventId ||
+          item?.outcomeId ||
+          item?.marketId
+        ) {
+
+          result.push({
+            event: item.eventName ||
+              item.event ||
+              event.name ||
+              "Unknown Event",
+
+            market: item.marketName ||
+              item.market ||
+              "Unknown Market",
+
+            pick: item.pick ||
+              item.outcomeName ||
+              item.name ||
+              "Unknown Pick",
+
+            odds: Number(
+              item.odds ??
+              item.odd ??
+              item.price ??
+              0
+            ),
+
+            eventId:
+              item.eventId ||
+              event.id ||
+              event.eventId,
+
+            gameId:
+              item.gameId ||
+              event.gameId,
+
+            marketId:
+              item.marketId,
+
+            specifier:
+              item.specifier ??
+              null,
+
+            outcomeId:
+              item.outcomeId,
+
+            startTime:
+              item.startTime ||
+              event.startTime
+          });
+
+          continue;
+        }
+
+
+        /*
+          Standard SportyBet booking structure:
+          outcome -> event -> markets -> outcomes
+        */
+
+        for (const market of markets) {
+
+          const marketOutcomes =
+            Array.isArray(market?.outcomes)
+              ? market.outcomes
+              : [];
+
+
+          for (const outcome of marketOutcomes) {
+
+            result.push({
 
               event:
-                item.eventName ||
                 event.name ||
-                `${event.homeTeamName || ""} vs ${event.awayTeamName || ""}`,
+                event.eventName ||
+                item.eventName ||
+                "Unknown Event",
 
               market:
-                item.marketName ||
-                marketObject.desc ||
-                marketObject.marketName ||
-                "Market",
+                market.name ||
+                market.marketName ||
+                "Unknown Market",
 
               pick:
-                item.outcomeName ||
-                outcomeObject.desc ||
-                outcomeObject.name ||
-                "Selection",
+                outcome.name ||
+                outcome.pick ||
+                outcome.label ||
+                "Unknown Pick",
 
-              odds:
-                item.odds ||
-                outcomeObject.odds ||
-                "",
+              odds: Number(
+                outcome.odds ??
+                outcome.odd ??
+                outcome.price ??
+                0
+              ),
 
               eventId:
-                item.eventId ||
-                event.eventId ||
                 event.id ||
-                "",
+                event.eventId ||
+                item.eventId,
 
               gameId:
-                item.gameId ||
                 event.gameId ||
-                event.id ||
-                "",
+                item.gameId,
 
               marketId:
-                item.marketId ||
-                marketObject.id ||
-                marketObject.marketId ||
-                "",
+                market.id ||
+                market.marketId ||
+                item.marketId,
 
               specifier:
-                item.specifier ||
-                marketObject.specifier ||
-                "",
+                market.specifier ??
+                item.specifier ??
+                null,
 
               outcomeId:
-                item.outcomeId ||
-                outcomeObject.id ||
-                outcomeObject.outcomeId ||
-                "",
+                outcome.id ||
+                outcome.outcomeId ||
+                item.outcomeId,
 
               startTime:
-                item.startTime ||
-                event.estimateStartTime ||
                 event.startTime ||
-                ""
-
-            };
-
+                item.startTime
+            });
           }
-        );
-
+        }
       }
 
 
-      return [];
+      /*
+        Remove duplicate selections.
+      */
 
+      const seen = new Set();
+
+      return result.filter(selection => {
+
+        const key = [
+          selection.eventId,
+          selection.marketId,
+          selection.specifier,
+          selection.outcomeId
+        ].join("|");
+
+        if (seen.has(key)) {
+          return false;
+        }
+
+        seen.add(key);
+        return true;
+      });
     }
 
 
-    // =====================================================
-    // AI OPTIMIZATION
-    // =====================================================
+    /* =========================================================
+       DISPLAY ORIGINAL SELECTIONS
+    ========================================================= */
+
+    function displayOriginalSlip(items) {
+
+      const container = $("originalSelections");
+
+      if (!container) return;
+
+      container.innerHTML = "";
+
+
+      items.forEach((selection, index) => {
+
+        const element = document.createElement("div");
+
+        element.className = "selection";
+
+
+        element.innerHTML = `
+          <div class="selection-top">
+            <div class="event-name">
+              ${escapeHtml(
+                selection.event || `Selection ${index + 1}`
+              )}
+            </div>
+
+            <div class="odds">
+              ${formatOdds(selection.odds)}
+            </div>
+          </div>
+
+          <div class="selection-market">
+            ${escapeHtml(selection.market || "Market")}
+          </div>
+
+          <div class="selection-pick">
+            ${escapeHtml(selection.pick || "Pick")}
+          </div>
+
+          <div class="selection-meta">
+            Event ID: ${escapeHtml(selection.eventId || "N/A")}
+          </div>
+        `;
+
+
+        container.appendChild(element);
+      });
+    }
+
+
+    /* =========================================================
+       OPTIMIZE
+    ========================================================= */
 
     async function optimizeSlip() {
 
-      const optimizeButton =
-        document.getElementById(
-          "optimizeBtn"
-        );
+      if (!Array.isArray(selections) || selections.length === 0) {
 
-
-      const selections =
-        getCurrentSelections();
-
-
-      if (!selections.length) {
-
-        showStatus(
-          "No selections are available to optimize.",
-          "error"
+        showMessage(
+          $("optimizeMessage"),
+          "Load a SportyBet booking before optimizing."
         );
 
         return;
-
       }
 
 
-      optimizeButton.disabled = true;
+      hideMessage($("optimizeMessage"));
 
-      optimizeButton.textContent =
-        "AI is analyzing...";
+      $("optimizeButton").disabled = true;
 
-
-      showStatus(
-        "AI is checking your selections and available SportyBet markets...",
-        "loading"
+      setLoading(
+        $("optimizeLoading"),
+        true
       );
 
 
       try {
 
-        const response =
-          await fetch("/api/optimize", {
+        const response = await fetch("/api/optimize", {
 
-            method: "POST",
+          method: "POST",
 
-            headers: {
-              "Content-Type": "application/json"
-            },
+          headers: {
+            "Content-Type": "application/json"
+          },
 
-            body: JSON.stringify({
-              selections
-            })
-
-          });
+          body: JSON.stringify({
+            selections: selections
+          })
+        });
 
 
         /*
           IMPORTANT:
-          Read the response as TEXT first.
+          Read text first.
 
           This prevents:
           Unexpected token 'A'
-          Unexpected token '<'
-          and similar JSON parsing errors.
+          Unexpected token 'H'
+          etc.
+
+          when the server returns a plain-text error.
         */
 
-        const raw =
-          await response.text();
-
-        console.log(
-          "Optimizer raw response:",
-          raw
-        );
-
+        const raw = await response.text();
 
         let data;
 
+
         try {
 
-          data =
-            JSON.parse(raw);
+          data = JSON.parse(raw);
 
-        } catch (parseError) {
+        } catch (error) {
 
           console.error(
-            "Optimizer returned non-JSON:",
+            "Non-JSON response from optimizer:",
             raw
           );
 
@@ -1567,146 +1211,47 @@
             raw ||
             "The optimizer returned an unexpected server response."
           );
-
         }
 
 
-        if (
-          !response.ok ||
-          data.success === false
-        ) {
-
-          /*
-            If the API tells us exactly what went wrong,
-            show that message.
-          */
-
-          let errorMessage =
-            data.error ||
-            "AI optimization failed.";
-
-
-          /*
-            Add useful information when some games
-            could not be verified.
-          */
-
-          if (
-            Array.isArray(
-              data.verificationErrors
-            ) &&
-            data.verificationErrors.length
-          ) {
-
-            const failedGames =
-              data.verificationErrors
-                .map(
-                  item =>
-                    item.event
-                )
-                .filter(Boolean)
-                .join(", ");
-
-
-            if (failedGames) {
-
-              errorMessage +=
-                ` Could not verify: ${failedGames}.`;
-
-            }
-
-          }
-
-
-          /*
-            Add useful information when individual
-            AI recommendations failed.
-          */
-
-          if (
-            Array.isArray(
-              data.aiErrors
-            ) &&
-            data.aiErrors.length
-          ) {
-
-            const failedAI =
-              data.aiErrors
-                .map(
-                  item =>
-                    item.event
-                )
-                .filter(Boolean)
-                .join(", ");
-
-
-            if (failedAI) {
-
-              errorMessage +=
-                ` AI recommendation failed for: ${failedAI}.`;
-
-            }
-
-          }
-
+        if (!response.ok || data?.success === false) {
 
           throw new Error(
-            errorMessage
+            data?.error ||
+            "Unable to optimize the selections."
           );
-
         }
 
 
         /*
-          IMPORTANT:
-          The backend structure is:
-
-          data
-            └── profiles
-                 ├── SAFE
-                 ├── BALANCED
-                 ├── RISKY
-                 └── AI RECOMMENDED
+          Save the complete backend response.
         */
 
-        if (
-          !data.profiles ||
-          typeof data.profiles !== "object"
-        ) {
-
-          throw new Error(
-            "The optimizer returned no profile data."
-          );
-
-        }
+        optimizedData = data;
 
 
-        optimizedData =
-          data.profiles;
+        /*
+          Display the four profiles.
+        */
+
+        displayResults(data);
 
 
-        displayResults(
-          data.profiles
-        );
+        $("resultsSection").classList.add("show");
 
 
-        document
-          .getElementById("resultsSection")
-          .style.display = "block";
+        /*
+          Scroll to results.
+        */
 
+        setTimeout(() => {
 
-        document
-          .getElementById("resultsSection")
-          .scrollIntoView({
+          $("resultsSection").scrollIntoView({
             behavior: "smooth",
             block: "start"
           });
 
-
-        showStatus(
-          "Optimization complete. Review the selections and choose a profile.",
-          "success"
-        );
+        }, 100);
 
 
       } catch (error) {
@@ -1716,55 +1261,29 @@
           error
         );
 
-        showStatus(
-          error.message ||
-          "AI optimization failed.",
-          "error"
+        showMessage(
+          $("optimizeMessage"),
+          error?.message ||
+          "Unable to optimize the selections."
         );
 
       } finally {
 
-        optimizeButton.disabled = false;
+        $("optimizeButton").disabled = false;
 
-        optimizeButton.textContent =
-          "Optimize My Selections";
-
+        setLoading(
+          $("optimizeLoading"),
+          false
+        );
       }
-
     }
 
 
-    // =====================================================
-    // CURRENT SELECTIONS
-    // =====================================================
+    /* =========================================================
+       DISPLAY RESULTS
+    ========================================================= */
 
-    function getCurrentSelections() {
-
-      if (
-        window.originalSelections &&
-        Array.isArray(
-          window.originalSelections
-        )
-      ) {
-
-        return window.originalSelections;
-
-      }
-
-
-      return [];
-
-    }
-
-
-    // =====================================================
-    // DISPLAY AI RESULTS
-    //
-    // IMPORTANT:
-    // This function now receives data.profiles directly.
-    // =====================================================
-
-    function displayResults(profilesData) {
+    function displayResults(data) {
 
       const profiles = [
         "SAFE",
@@ -1774,533 +1293,561 @@
       ];
 
 
-      profiles.forEach(
-        profile => {
+      /*
+        CRITICAL FIX:
 
-          /*
-            Read each profile directly from
-            the profiles object.
-          */
+        The backend returns:
 
-          const result =
-            profilesData?.[profile] || {};
+        data.profiles.SAFE
+        data.profiles.BALANCED
+        data.profiles.RISKY
+        data.profiles["AI RECOMMENDED"]
 
+        The fallback supports the older format too.
+      */
 
-          const selections =
-            Array.isArray(
-              result.selections
-            )
-              ? result.selections
-              : [];
-
-
-          let prefix;
+      const profileData =
+        data?.profiles ||
+        data ||
+        {};
 
 
-          if (
-            profile === "AI RECOMMENDED"
-          ) {
+      profiles.forEach(profile => {
 
-            prefix =
-              "aiRecommended";
-
-          } else {
-
-            prefix =
-              profile.toLowerCase();
-
-          }
+        const result =
+          profileData?.[profile] ||
+          {};
 
 
-          const countElement =
-            document.getElementById(
-              prefix + "Count"
-            );
+        const profileSelections =
+          Array.isArray(result.selections)
+            ? result.selections
+            : [];
 
 
-          const oddsElement =
-            document.getElementById(
-              prefix + "Odds"
-            );
+        const prefix =
+          profile === "AI RECOMMENDED"
+            ? "aiRecommended"
+            : profile.toLowerCase();
 
 
-          const summaryElement =
-            document.getElementById(
-              prefix + "Summary"
-            );
+        const countElement =
+          $(prefix + "Count");
+
+        const oddsElement =
+          $(prefix + "Odds");
+
+        const summaryElement =
+          $(prefix + "Summary");
+
+        const selectionsElement =
+          $(prefix + "Selections");
 
 
-          const selectionsElement =
-            document.getElementById(
-              prefix + "Selections"
-            );
+        /*
+          Count
+        */
 
+        if (countElement) {
 
-          if (countElement) {
-
-            countElement.textContent =
-              selections.length;
-
-          }
-
-
-          if (oddsElement) {
-
-            oddsElement.textContent =
-              formatCombinedOdds(
-                selections
-              );
-
-          }
-
-
-          if (
-            summaryElement &&
-            result.summary
-          ) {
-
-            summaryElement.textContent =
-              result.summary;
-
-          }
-
-
-          if (selectionsElement) {
-
-            renderProfileSelections(
-              selectionsElement,
-              selections,
-              profile
-            );
-
-          }
-
+          countElement.textContent =
+            profileSelections.length;
         }
-      );
+
+
+        /*
+          Combined odds
+        */
+
+        if (oddsElement) {
+
+          oddsElement.textContent =
+            result.combinedOdds ??
+            formatCombinedOdds(profileSelections);
+        }
+
+
+        /*
+          Summary
+        */
+
+        if (summaryElement) {
+
+          summaryElement.textContent =
+            result.summary ||
+            getDefaultSummary(profile);
+        }
+
+
+        /*
+          Individual selections
+        */
+
+        if (selectionsElement) {
+
+          renderProfileSelections(
+            selectionsElement,
+            profileSelections,
+            profile
+          );
+        }
+
+      });
 
 
       /*
-        Reset selected profile.
+        Verification information
+      */
+
+      displayVerification(data);
+
+
+      /*
+        Reset profile selection.
       */
 
       document
         .querySelectorAll(".profile")
-        .forEach(
-          card =>
-            card.classList.remove(
-              "selected"
-            )
-        );
+        .forEach(card => {
+
+          card.classList.remove("selected");
+
+        });
 
 
-      document
-        .getElementById(
-          "generateSection"
-        )
-        .classList.remove("show");
+      $("generateSection").classList.remove("show");
 
-
-      document
-        .getElementById(
-          "generatedCodeBox"
-        )
-        .classList.remove("show");
+      $("generatedCodeBox").classList.remove("show");
 
 
       selectedProfile = null;
-
       generatedShareURL = null;
-
     }
 
 
-    // =====================================================
-    // RENDER PROFILE SELECTIONS
-    // =====================================================
+    /* =========================================================
+       DEFAULT PROFILE SUMMARIES
+    ========================================================= */
+
+    function getDefaultSummary(profile) {
+
+      if (profile === "SAFE") {
+
+        return "I've trimmed this down to the less aggressive picks.";
+      }
+
+      if (profile === "BALANCED") {
+
+        return "A middle-ground mix — not too cautious, not too aggressive.";
+      }
+
+      if (profile === "RISKY") {
+
+        return "This keeps more of the action, but there's less room for mistakes.";
+      }
+
+      if (profile === "AI RECOMMENDED") {
+
+        return "I looked at the available SportyBet markets and picked the options that fit the games better.";
+      }
+
+      return "";
+    }
+
+
+    /* =========================================================
+       RENDER PROFILE SELECTIONS
+    ========================================================= */
 
     function renderProfileSelections(
       container,
-      selections,
+      items,
       profile
     ) {
 
       container.innerHTML = "";
 
 
-      if (!selections.length) {
+      if (!Array.isArray(items) || items.length === 0) {
 
-        container.innerHTML = `
-          <div class="profile-empty">
-            ${
-              profile === "AI RECOMMENDED"
-                ? "No verified alternative selections were returned for this profile."
-                : "No selections were returned for this profile."
-            }
-          </div>
-        `;
+        const empty = document.createElement("div");
+
+        empty.className = "no-selections";
+
+        empty.textContent =
+          profile === "AI RECOMMENDED"
+            ? "No verified alternative selections were returned for this profile."
+            : "No selections were returned for this profile.";
+
+        container.appendChild(empty);
 
         return;
-
       }
 
 
-      selections.forEach(
-        (selection, index) => {
+      items.forEach((selection, index) => {
 
-          const event =
-            selection.event ||
-            "Unknown event";
+        const item = document.createElement("div");
 
-          const market =
-            selection.market ||
-            "Market";
-
-          const pick =
-            selection.pick ||
-            "Selection";
-
-          const odds =
-            selection.odds ||
-            "—";
-
-          const reason =
-            selection.reason ||
-            "No explanation was provided.";
+        item.className = "profile-selection";
 
 
-          const item =
-            document.createElement("div");
+        const game =
+          selection.event ||
+          selection.eventName ||
+          selection.match ||
+          `Game ${index + 1}`;
 
 
-          item.className =
-            "profile-selection";
+        const market =
+          selection.market ||
+          selection.marketName ||
+          "Market";
 
 
-          let aiMarketTag = "";
+        const pick =
+          selection.pick ||
+          selection.outcome ||
+          selection.outcomeName ||
+          selection.name ||
+          "Pick";
 
-
-          if (
-            profile === "AI RECOMMENDED"
-          ) {
-
-            aiMarketTag = `
-              <span class="profile-tag ai-market">
-                VERIFIED SPORTYBET MARKET
-              </span>
-            `;
-
-          }
-
-
-          item.innerHTML = `
-
-            <div class="profile-selection-number">
-              SELECTION ${index + 1}
-            </div>
-
-            <div class="profile-selection-event">
-              ${escapeHtml(event)}
-            </div>
-
-            <div class="profile-selection-details">
-
-              <span class="profile-tag">
-                ${escapeHtml(market)}
-              </span>
-
-              <span class="profile-tag">
-                ${escapeHtml(pick)}
-              </span>
-
-              <span class="profile-tag odds">
-                @ ${escapeHtml(String(odds))}
-              </span>
-
-              ${aiMarketTag}
-
-            </div>
-
-            <div class="profile-selection-reason">
-              <strong>Why this selection?</strong>
-              ${escapeHtml(reason)}
-            </div>
-
-          `;
-
-
-          container.appendChild(item);
-
-        }
-      );
-
-    }
-
-
-    // =====================================================
-    // COMBINED ODDS
-    // =====================================================
-
-    function formatCombinedOdds(
-      selections
-    ) {
-
-      if (
-        !Array.isArray(selections) ||
-        !selections.length
-      ) {
-
-        return "—";
-
-      }
-
-
-      let combinedOdds = 1;
-
-      let validOdds = 0;
-
-
-      for (
-        const selection
-        of selections
-      ) {
 
         const odds =
-          Number(
-            selection?.odds
+          formatOdds(
+            selection.odds ??
+            selection.odd ??
+            selection.price
           );
 
 
-        if (
-          Number.isFinite(odds) &&
-          odds > 0
-        ) {
-
-          combinedOdds *= odds;
-
-          validOdds++;
-
-        }
-
-      }
+        const reason =
+          selection.reason ||
+          "";
 
 
-      if (
-        validOdds !== selections.length ||
-        !Number.isFinite(combinedOdds)
-      ) {
+        item.innerHTML = `
 
-        return "—";
+          <div class="game">
+            ${escapeHtml(game)}
+          </div>
 
-      }
+          <div class="pick">
+            ${escapeHtml(market)}
+            — 
+            <strong>${escapeHtml(pick)}</strong>
+            ${odds !== "—" ? ` (${escapeHtml(odds)})` : ""}
+          </div>
+
+          ${
+            reason
+              ? `
+                <div class="reason">
+                  ${escapeHtml(reason)}
+                </div>
+              `
+              : ""
+          }
+
+        `;
 
 
-      return combinedOdds.toFixed(2);
-
+        container.appendChild(item);
+      });
     }
 
 
-    // =====================================================
-    // SELECT PROFILE
-    // =====================================================
+    /* =========================================================
+       VERIFICATION DISPLAY
+    ========================================================= */
+
+    function displayVerification(data) {
+
+      const box = $("verificationBox");
+
+      if (!box) return;
+
+
+      const verification =
+        data?.verification;
+
+
+      if (!verification) {
+
+        box.style.display = "none";
+
+        return;
+      }
+
+
+      const total =
+        verification.totalGames ??
+        data?.totalGames;
+
+
+      const verified =
+        verification.verifiedGames ??
+        data?.verifiedGames;
+
+
+      const errors = Array.isArray(
+        verification.errors
+      )
+        ? verification.errors
+        : [];
+
+
+      let html = "";
+
+
+      if (
+        Number.isFinite(Number(total)) &&
+        Number.isFinite(Number(verified))
+      ) {
+
+        html += `
+          <strong>Market verification:</strong>
+          ${verified} of ${total} game${Number(total) === 1 ? "" : "s"} verified.
+        `;
+      }
+
+
+      if (errors.length) {
+
+        html += `
+          <div style="margin-top:6px;">
+            ${errors
+              .map(error => escapeHtml(String(error)))
+              .join("<br>")}
+          </div>
+        `;
+      }
+
+
+      if (html) {
+
+        box.innerHTML = html;
+
+        box.style.display = "block";
+
+      } else {
+
+        box.style.display = "none";
+      }
+    }
+
+
+    /* =========================================================
+       SELECT PROFILE
+    ========================================================= */
 
     function selectProfile(profile) {
 
-      if (
-        !optimizedData ||
-        !optimizedData[profile]
-      ) {
-
+      if (!optimizedData) {
         return;
-
       }
 
 
-      const selections =
-        Array.isArray(
-          optimizedData[
-            profile
-          ].selections
-        )
-          ? optimizedData[
-              profile
-            ].selections
+      const profileData =
+        optimizedData?.profiles ||
+        optimizedData ||
+        {};
+
+
+      const result =
+        profileData?.[profile];
+
+
+      const profileSelections =
+        Array.isArray(result?.selections)
+          ? result.selections
           : [];
 
 
-      if (!selections.length) {
+      /*
+        Do not allow an empty profile to be selected.
+      */
 
-        showStatus(
-          `${profile} does not contain any selections.`,
-          "error"
+      if (profileSelections.length === 0) {
+
+        showMessage(
+          $("generateMessage"),
+          "This profile does not contain any selections."
         );
 
         return;
-
       }
-
-
-      selectedProfile =
-        profile;
 
 
       document
         .querySelectorAll(".profile")
-        .forEach(
-          card =>
-            card.classList.remove(
-              "selected"
-            )
+        .forEach(card => {
+
+          card.classList.remove("selected");
+
+        });
+
+
+      const element =
+        document.querySelector(
+          `.profile[data-profile="${CSS.escape(profile)}"]`
         );
 
 
-      const profileId =
-        "profile-" + profile;
+      if (element) {
 
-
-      const profileCard =
-        document.getElementById(
-          profileId
-        );
-
-
-      if (profileCard) {
-
-        profileCard.classList.add(
-          "selected"
-        );
-
+        element.classList.add("selected");
       }
 
 
-      const combinedOdds =
-        formatCombinedOdds(
-          selections
-        );
+      selectedProfile = profile;
 
 
-      document
-        .getElementById(
-          "selectedProfileName"
-        )
-        .textContent =
-        `${profile} • ${selections.length} selections • ${combinedOdds} combined odds`;
+      $("generateSection").classList.add("show");
 
 
-      document
-        .getElementById(
-          "generateSection"
-        )
-        .classList.add("show");
-
-
-      document
-        .getElementById(
-          "generatedCodeBox"
-        )
+      $("generatedCodeBox")
         .classList.remove("show");
 
 
-      generatedShareURL = null;
+      hideMessage($("generateMessage"));
 
 
-      document
-        .getElementById(
-          "generateSection"
-        )
-        .scrollIntoView({
+      setTimeout(() => {
+
+        $("generateSection").scrollIntoView({
           behavior: "smooth",
           block: "start"
         });
 
+      }, 100);
     }
 
 
-    // =====================================================
-    // GENERATE REAL SPORTYBET BOOKING CODE
-    // =====================================================
+    /* =========================================================
+       GENERATE SPORTYBET BOOKING
+    ========================================================= */
 
     async function generateBooking() {
 
-      if (
-        !selectedProfile ||
-        !optimizedData ||
-        !optimizedData[
-          selectedProfile
-        ]
-      ) {
+      if (!selectedProfile) {
 
-        showStatus(
-          "Please select a profile first.",
-          "error"
+        showMessage(
+          $("generateMessage"),
+          "Please select a profile first."
         );
 
         return;
-
       }
 
 
-      const selections =
-        Array.isArray(
-          optimizedData[
-            selectedProfile
-          ].selections
-        )
-          ? optimizedData[
-              selectedProfile
-            ].selections
+      const profileData =
+        optimizedData?.profiles ||
+        optimizedData ||
+        {};
+
+
+      const profile =
+        profileData?.[selectedProfile];
+
+
+      const profileSelections =
+        Array.isArray(profile?.selections)
+          ? profile.selections
           : [];
 
 
-      if (!selections.length) {
+      if (profileSelections.length === 0) {
 
-        showStatus(
-          "The selected profile has no selections.",
-          "error"
+        showMessage(
+          $("generateMessage"),
+          "The selected profile contains no selections."
         );
 
         return;
-
       }
 
 
-      const button =
-        document.getElementById(
-          "generateBtn"
+      /*
+        Every selection must have the identifiers needed
+        to create a genuine SportyBet booking.
+      */
+
+      const validSelections =
+        profileSelections.filter(selection => {
+
+          return (
+            selection.eventId &&
+            selection.marketId &&
+            selection.outcomeId
+          );
+
+        });
+
+
+      if (
+        validSelections.length !==
+        profileSelections.length
+      ) {
+
+        showMessage(
+          $("generateMessage"),
+          "Some selections are missing SportyBet identifiers, so a genuine booking code cannot be created."
         );
 
-
-      button.disabled = true;
-
-      button.textContent =
-        "Generating...";
+        return;
+      }
 
 
-      showStatus(
-        "Creating your SportyBet booking code...",
-        "loading"
+      $("generateButton").disabled = true;
+
+      setLoading(
+        $("generateLoading"),
+        true
+      );
+
+      hideMessage(
+        $("generateMessage")
       );
 
 
       try {
 
-        const response =
-          await fetch(
-            "https://sportybet-api.onrender.com/create-booking",
-            {
+        const payloadSelections =
+          validSelections.map(selection => ({
 
-              method: "POST",
+            eventId:
+              selection.eventId,
 
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
+            marketId:
+              selection.marketId,
 
-              body: JSON.stringify({
-                selections
-              })
+            specifier:
+              selection.specifier ??
+              null,
 
-            }
-          );
+            outcomeId:
+              selection.outcomeId
+
+          }));
+
+
+        const response = await fetch(
+          "https://sportybet-api.onrender.com/create-booking",
+          {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+              selections:
+                payloadSelections
+            })
+          }
+        );
 
 
         const raw =
@@ -2309,254 +1856,313 @@
 
         let data;
 
+
         try {
 
           data =
             JSON.parse(raw);
 
-        } catch (_) {
+        } catch (error) {
+
+          console.error(
+            "Non-JSON response from booking API:",
+            raw
+          );
 
           throw new Error(
             raw ||
-            "SportyBet returned an unexpected response."
+            "SportyBet booking service returned an unexpected response."
           );
-
-        }
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error ||
-            "SportyBet could not create the booking code."
-          );
-
         }
 
 
         if (
-          !data.success ||
-          !data.shareCode
+          !response.ok ||
+          data?.success === false
         ) {
 
           throw new Error(
-            "SportyBet did not return a valid booking code."
+            data?.error ||
+            "Unable to create the SportyBet booking."
           );
+        }
 
+
+        const shareCode =
+          data?.shareCode ||
+          data?.code;
+
+
+        if (!shareCode) {
+
+          throw new Error(
+            "The booking service did not return a SportyBet share code."
+          );
         }
 
 
         generatedShareURL =
-          data.shareURL || null;
+          data?.shareURL ||
+          data?.shareUrl ||
+          `https://www.sportybet.com/ng/share/${encodeURIComponent(shareCode)}`;
 
 
-        document.getElementById(
-          "generatedCode"
-        ).textContent =
-          data.shareCode;
+        $("generatedCode").textContent =
+          shareCode;
 
 
-        document
-          .getElementById(
-            "generatedCodeBox"
-          )
+        $("generatedCodeBox")
           .classList.add("show");
 
 
-        showStatus(
-          "Your SportyBet booking code has been generated.",
+        showMessage(
+          $("generateMessage"),
+          "SportyBet booking code generated successfully.",
           "success"
         );
 
 
-        document
-          .getElementById(
-            "generatedCodeBox"
-          )
-          .scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-          });
-
-
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Generate booking error:",
+          error
+        );
 
-        showStatus(
-          error.message ||
-          "Unable to generate the SportyBet code.",
-          "error"
+
+        showMessage(
+          $("generateMessage"),
+          error?.message ||
+          "Unable to generate the SportyBet booking."
         );
 
       } finally {
 
-        button.disabled = false;
+        $("generateButton").disabled =
+          false;
 
-        button.textContent =
-          "Generate SportyBet Code";
-
+        setLoading(
+          $("generateLoading"),
+          false
+        );
       }
-
     }
 
 
-    // =====================================================
-    // COPY GENERATED CODE
-    // =====================================================
+    /* =========================================================
+       COPY CODE
+    ========================================================= */
 
-    async function copyCode() {
+    async function copyGeneratedCode() {
 
       const code =
-        document.getElementById(
-          "generatedCode"
-        ).textContent;
+        $("generatedCode")?.textContent?.trim();
 
 
-      if (
-        !code ||
-        code === "—"
-      ) {
-
+      if (!code || code === "—") {
         return;
-
       }
 
 
       try {
 
-        await navigator.clipboard.writeText(
-          code
-        );
+        /*
+          Clipboard API
+        */
 
+        if (
+          navigator.clipboard &&
+          window.isSecureContext
+        ) {
 
-        const button =
-          document.getElementById(
-            "copyBtn"
+          await navigator.clipboard.writeText(
+            code
           );
 
+        } else {
 
-        const oldText =
-          button.textContent;
+          /*
+            Fallback
+          */
+
+          const textarea =
+            document.createElement("textarea");
+
+          textarea.value = code;
+
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+
+          document.body.appendChild(
+            textarea
+          );
+
+          textarea.focus();
+          textarea.select();
+
+          document.execCommand(
+            "copy"
+          );
+
+          textarea.remove();
+        }
 
 
-        button.textContent =
-          "Copied!";
-
-
-        setTimeout(
-          () => {
-
-            button.textContent =
-              oldText;
-
-          },
-          1800
+        showMessage(
+          $("generateMessage"),
+          "SportyBet code copied.",
+          "success"
         );
-
 
       } catch (error) {
 
-        showStatus(
-          "Unable to copy automatically. Please copy the code manually.",
-          "error"
+        console.error(
+          "Copy error:",
+          error
         );
 
+        showMessage(
+          $("generateMessage"),
+          "Unable to copy automatically. Please copy the code manually."
+        );
       }
-
     }
 
 
-    // =====================================================
-    // OPEN SPORTYBET
-    // =====================================================
+    /* =========================================================
+       OPEN SPORTYBET
+    ========================================================= */
 
     function openSportyBet() {
 
-      if (generatedShareURL) {
+      if (!generatedShareURL) {
 
-        window.open(
-          generatedShareURL,
-          "_blank"
+        showMessage(
+          $("generateMessage"),
+          "No SportyBet booking link is available."
         );
 
         return;
-
       }
 
 
-      const code =
-        document.getElementById(
-          "generatedCode"
-        ).textContent;
-
-
-      if (
-        code &&
-        code !== "—"
-      ) {
-
-        window.open(
-          `https://www.sportybet.com/ng/?shareCode=${encodeURIComponent(code)}`,
-          "_blank"
-        );
-
-      }
-
+      window.open(
+        generatedShareURL,
+        "_blank",
+        "noopener,noreferrer"
+      );
     }
 
 
-    // =====================================================
-    // ESCAPE HTML
-    // =====================================================
+    /* =========================================================
+       FORMATTING HELPERS
+    ========================================================= */
+
+    function formatOdds(value) {
+
+      const odds = Number(value);
+
+      if (
+        !Number.isFinite(odds) ||
+        odds <= 0
+      ) {
+
+        return "—";
+      }
+
+      return odds.toFixed(2);
+    }
+
 
     function escapeHtml(value) {
 
       return String(value ?? "")
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-        .replace(
-          /</g,
-          "&lt;"
-        )
-        .replace(
-          />/g,
-          "&gt;"
-        )
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
 
-    // =====================================================
-    // ENTER KEY
-    // =====================================================
+    /* =========================================================
+       EVENT LISTENERS
+    ========================================================= */
 
-    document
-      .getElementById("bookingCode")
+    $("loadButton")
+      .addEventListener(
+        "click",
+        loadSlip
+      );
+
+
+    $("optimizeButton")
+      .addEventListener(
+        "click",
+        optimizeSlip
+      );
+
+
+    $("generateButton")
+      .addEventListener(
+        "click",
+        generateBooking
+      );
+
+
+    $("copyCodeButton")
+      .addEventListener(
+        "click",
+        copyGeneratedCode
+      );
+
+
+    $("openBookingButton")
+      .addEventListener(
+        "click",
+        openSportyBet
+      );
+
+
+    /*
+      Enter key loads the booking.
+    */
+
+    $("bookingCode")
       .addEventListener(
         "keydown",
-        function(event) {
+        event => {
 
-          if (
-            event.key === "Enter"
-          ) {
+          if (event.key === "Enter") {
+
+            event.preventDefault();
 
             loadSlip();
-
           }
-
         }
       );
+
+
+    /*
+      Profile cards.
+    */
+
+    document
+      .querySelectorAll(".profile")
+      .forEach(card => {
+
+        card.addEventListener(
+          "click",
+          () => {
+
+            const profile =
+              card.dataset.profile;
+
+            selectProfile(profile);
+          }
+        );
+
+      });
 
   </script>
 
