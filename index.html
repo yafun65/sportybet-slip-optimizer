@@ -32,8 +32,6 @@
       padding: 18px 14px 50px;
     }
 
-    /* HEADER */
-
     .header {
       text-align: center;
       padding: 24px 10px 20px;
@@ -66,8 +64,6 @@
       margin: auto;
     }
 
-    /* CARD */
-
     .card {
       background: #0d251b;
       border: 1px solid #183a2c;
@@ -89,8 +85,6 @@
       line-height: 1.45;
       margin-bottom: 16px;
     }
-
-    /* INPUT */
 
     .input-label {
       display: block;
@@ -167,8 +161,6 @@
       font-size: 12px;
     }
 
-    /* STATUS */
-
     .status {
       display: none;
       padding: 12px 14px;
@@ -200,8 +192,6 @@
       color: #aee7c8;
     }
 
-    /* SELECTION SUMMARY */
-
     .summary-row {
       display: flex;
       gap: 10px;
@@ -226,8 +216,6 @@
     .summary-box strong {
       font-size: 18px;
     }
-
-    /* SELECTIONS */
 
     .selection-list {
       display: flex;
@@ -269,8 +257,6 @@
       font-weight: 700;
     }
 
-    /* OPTIMIZE */
-
     .optimize-box {
       text-align: center;
     }
@@ -280,8 +266,6 @@
       padding: 15px;
       font-size: 15px;
     }
-
-    /* PROFILE CARDS */
 
     .profiles {
       display: flex;
@@ -371,8 +355,6 @@
       white-space: nowrap;
     }
 
-    /* AI RECOMMENDED */
-
     .profile-ai {
       border-color: #315a48;
       background:
@@ -405,8 +387,6 @@
       font-size: 10px;
       line-height: 1.4;
     }
-
-    /* PROFILE SELECTION DETAILS */
 
     .profile-selections {
       margin-top: 13px;
@@ -477,8 +457,6 @@
       color: #73e7a8;
     }
 
-    /* WHY THIS SELECTION */
-
     .profile-selection-reason {
       margin-top: 8px;
       padding-top: 8px;
@@ -498,8 +476,6 @@
       font-size: 11px;
       padding: 8px 0;
     }
-
-    /* GENERATE */
 
     .generate-box {
       display: none;
@@ -574,8 +550,6 @@
       line-height: 1.5;
     }
 
-    /* FOOTER */
-
     footer {
       text-align: center;
       color: #526960;
@@ -583,8 +557,6 @@
       line-height: 1.5;
       padding: 10px 10px 30px;
     }
-
-    /* MOBILE */
 
     @media (max-width: 600px) {
 
@@ -644,8 +616,6 @@
 
   <main class="container">
 
-    <!-- HEADER -->
-
     <header class="header">
 
       <div class="logo">
@@ -660,9 +630,6 @@
       </p>
 
     </header>
-
-
-    <!-- BOOKING CODE -->
 
     <section class="card">
 
@@ -705,13 +672,7 @@
 
     </section>
 
-
-    <!-- STATUS -->
-
     <div id="status" class="status"></div>
-
-
-    <!-- YOUR SELECTIONS -->
 
     <section
       id="originalSection"
@@ -748,9 +709,6 @@
 
     </section>
 
-
-    <!-- OPTIMIZE -->
-
     <section
       id="optimizeSection"
       class="card optimize-box"
@@ -776,9 +734,6 @@
 
     </section>
 
-
-    <!-- AI RESULTS -->
-
     <section
       id="resultsSection"
       class="card"
@@ -795,8 +750,6 @@
       </div>
 
       <div class="profiles">
-
-        <!-- SAFE -->
 
         <div
           id="profile-SAFE"
@@ -854,9 +807,6 @@
 
         </div>
 
-
-        <!-- BALANCED -->
-
         <div
           id="profile-BALANCED"
           class="profile"
@@ -874,7 +824,7 @@
               <h3>BALANCED</h3>
 
               <p id="balancedSummary">
-                A middle-ground selection profile.
+                A middle-ground mix — not too cautious, not too aggressive.
               </p>
 
             </div>
@@ -912,9 +862,6 @@
           </div>
 
         </div>
-
-
-        <!-- RISKY -->
 
         <div
           id="profile-RISKY"
@@ -971,9 +918,6 @@
           </div>
 
         </div>
-
-
-        <!-- AI RECOMMENDED -->
 
         <div
           id="profile-AI RECOMMENDED"
@@ -1040,9 +984,6 @@
 
     </section>
 
-
-    <!-- GENERATE CODE -->
-
     <section
       id="generateSection"
       class="card generate-box"
@@ -1080,9 +1021,6 @@
       >
         Generate SportyBet Code
       </button>
-
-
-      <!-- GENERATED CODE -->
 
       <div
         id="generatedCodeBox"
@@ -1129,14 +1067,12 @@
 
     </section>
 
-
     <footer>
       SportyBet Selection Optimizer<br>
       Profiles describe selection variance and are not guarantees of results.
     </footer>
 
   </main>
-
 
   <script>
 
@@ -1231,8 +1167,24 @@
           });
 
 
-        const data =
-          await response.json();
+        const raw =
+          await response.text();
+
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(raw);
+
+        } catch (_) {
+
+          throw new Error(
+            raw ||
+            "The server returned an unexpected response."
+          );
+
+        }
 
 
         if (!response.ok) {
@@ -1315,13 +1267,10 @@
         selections;
 
 
-      const count =
-        selections.length;
-
-
       document.getElementById(
         "selectionCount"
-      ).textContent = count;
+      ).textContent =
+        selections.length;
 
 
       document.getElementById(
@@ -1443,10 +1392,10 @@
             const markets =
               event.markets || [];
 
-            let marketObject =
+            const marketObject =
               markets[0] || {};
 
-            let outcomeObject =
+            const outcomeObject =
               marketObject.outcomes?.[0] ||
               {};
 
@@ -1461,11 +1410,13 @@
               market:
                 item.marketName ||
                 marketObject.desc ||
+                marketObject.marketName ||
                 "Market",
 
               pick:
                 item.outcomeName ||
                 outcomeObject.desc ||
+                outcomeObject.name ||
                 "Selection",
 
               odds:
@@ -1476,16 +1427,19 @@
               eventId:
                 item.eventId ||
                 event.eventId ||
+                event.id ||
                 "",
 
               gameId:
                 item.gameId ||
                 event.gameId ||
+                event.id ||
                 "",
 
               marketId:
                 item.marketId ||
                 marketObject.id ||
+                marketObject.marketId ||
                 "",
 
               specifier:
@@ -1496,11 +1450,13 @@
               outcomeId:
                 item.outcomeId ||
                 outcomeObject.id ||
+                outcomeObject.outcomeId ||
                 "",
 
               startTime:
                 item.startTime ||
                 event.estimateStartTime ||
+                event.startTime ||
                 ""
 
             };
@@ -1532,9 +1488,7 @@
         getCurrentSelections();
 
 
-      if (
-        !selections.length
-      ) {
+      if (!selections.length) {
 
         showStatus(
           "No selections are available to optimize.",
@@ -1576,24 +1530,164 @@
           });
 
 
-        const data =
-          await response.json();
+        /*
+          IMPORTANT:
+          Read the response as TEXT first.
+
+          This prevents:
+          Unexpected token 'A'
+          Unexpected token '<'
+          and similar JSON parsing errors.
+        */
+
+        const raw =
+          await response.text();
+
+        console.log(
+          "Optimizer raw response:",
+          raw
+        );
 
 
-        if (!response.ok) {
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(raw);
+
+        } catch (parseError) {
+
+          console.error(
+            "Optimizer returned non-JSON:",
+            raw
+          );
 
           throw new Error(
-            data.error ||
-            "AI optimization failed."
+            raw ||
+            "The optimizer returned an unexpected server response."
           );
 
         }
 
 
-        optimizedData = data;
+        if (
+          !response.ok ||
+          data.success === false
+        ) {
+
+          /*
+            If the API tells us exactly what went wrong,
+            show that message.
+          */
+
+          let errorMessage =
+            data.error ||
+            "AI optimization failed.";
 
 
-        displayResults(data);
+          /*
+            Add useful information when some games
+            could not be verified.
+          */
+
+          if (
+            Array.isArray(
+              data.verificationErrors
+            ) &&
+            data.verificationErrors.length
+          ) {
+
+            const failedGames =
+              data.verificationErrors
+                .map(
+                  item =>
+                    item.event
+                )
+                .filter(Boolean)
+                .join(", ");
+
+
+            if (failedGames) {
+
+              errorMessage +=
+                ` Could not verify: ${failedGames}.`;
+
+            }
+
+          }
+
+
+          /*
+            Add useful information when individual
+            AI recommendations failed.
+          */
+
+          if (
+            Array.isArray(
+              data.aiErrors
+            ) &&
+            data.aiErrors.length
+          ) {
+
+            const failedAI =
+              data.aiErrors
+                .map(
+                  item =>
+                    item.event
+                )
+                .filter(Boolean)
+                .join(", ");
+
+
+            if (failedAI) {
+
+              errorMessage +=
+                ` AI recommendation failed for: ${failedAI}.`;
+
+            }
+
+          }
+
+
+          throw new Error(
+            errorMessage
+          );
+
+        }
+
+
+        /*
+          IMPORTANT:
+          The backend structure is:
+
+          data
+            └── profiles
+                 ├── SAFE
+                 ├── BALANCED
+                 ├── RISKY
+                 └── AI RECOMMENDED
+        */
+
+        if (
+          !data.profiles ||
+          typeof data.profiles !== "object"
+        ) {
+
+          throw new Error(
+            "The optimizer returned no profile data."
+          );
+
+        }
+
+
+        optimizedData =
+          data.profiles;
+
+
+        displayResults(
+          data.profiles
+        );
 
 
         document
@@ -1617,7 +1711,10 @@
 
       } catch (error) {
 
-        console.error(error);
+        console.error(
+          "Optimization error:",
+          error
+        );
 
         showStatus(
           error.message ||
@@ -1662,9 +1759,12 @@
 
     // =====================================================
     // DISPLAY AI RESULTS
+    //
+    // IMPORTANT:
+    // This function now receives data.profiles directly.
     // =====================================================
 
-    function displayResults(data) {
+    function displayResults(profilesData) {
 
       const profiles = [
         "SAFE",
@@ -1677,12 +1777,19 @@
       profiles.forEach(
         profile => {
 
+          /*
+            Read each profile directly from
+            the profiles object.
+          */
+
           const result =
-            data?.[profile] || {};
+            profilesData?.[profile] || {};
 
 
           const selections =
-            Array.isArray(result.selections)
+            Array.isArray(
+              result.selections
+            )
               ? result.selections
               : [];
 
@@ -1694,7 +1801,8 @@
             profile === "AI RECOMMENDED"
           ) {
 
-            prefix = "aiRecommended";
+            prefix =
+              "aiRecommended";
 
           } else {
 
@@ -1739,14 +1847,16 @@
           if (oddsElement) {
 
             oddsElement.textContent =
-              formatCombinedOdds(selections);
+              formatCombinedOdds(
+                selections
+              );
 
           }
 
 
           if (
             summaryElement &&
-            typeof result.summary === "string"
+            result.summary
           ) {
 
             summaryElement.textContent =
@@ -1769,7 +1879,9 @@
       );
 
 
-      // Reset selected profile
+      /*
+        Reset selected profile.
+      */
 
       document
         .querySelectorAll(".profile")
@@ -1953,7 +2065,9 @@
       ) {
 
         const odds =
-          Number(selection?.odds);
+          Number(
+            selection?.odds
+          );
 
 
         if (
@@ -2003,9 +2117,13 @@
 
       const selections =
         Array.isArray(
-          optimizedData[profile].selections
+          optimizedData[
+            profile
+          ].selections
         )
-          ? optimizedData[profile].selections
+          ? optimizedData[
+              profile
+            ].selections
           : [];
 
 
@@ -2021,7 +2139,8 @@
       }
 
 
-      selectedProfile = profile;
+      selectedProfile =
+        profile;
 
 
       document
@@ -2105,7 +2224,9 @@
       if (
         !selectedProfile ||
         !optimizedData ||
-        !optimizedData[selectedProfile]
+        !optimizedData[
+          selectedProfile
+        ]
       ) {
 
         showStatus(
@@ -2182,8 +2303,25 @@
           );
 
 
-        const data =
-          await response.json();
+        const raw =
+          await response.text();
+
+
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(raw);
+
+        } catch (_) {
+
+          throw new Error(
+            raw ||
+            "SportyBet returned an unexpected response."
+          );
+
+        }
 
 
         if (!response.ok) {
@@ -2308,8 +2446,10 @@
 
         setTimeout(
           () => {
+
             button.textContent =
               oldText;
+
           },
           1800
         );
