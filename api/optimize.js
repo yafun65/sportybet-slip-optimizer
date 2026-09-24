@@ -27,9 +27,9 @@ export default async function handler(req, res) {
       process.env.GOOGLE_API_KEY ||
       "";
 
-    // ---------------------------------------------------------
+    // =========================================================
     // NORMALIZE ORIGINAL SELECTIONS
-    // ---------------------------------------------------------
+    // =========================================================
 
     const originals = selections
       .map((s) => ({
@@ -67,9 +67,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // ---------------------------------------------------------
+    // =========================================================
     // UNIQUE EVENTS
-    // ---------------------------------------------------------
+    // =========================================================
 
     const uniqueEvents = [];
 
@@ -90,13 +90,14 @@ export default async function handler(req, res) {
       }
     }
 
-    // ---------------------------------------------------------
-    // FETCH JSON
-    // ---------------------------------------------------------
+    // =========================================================
+    // GENERIC FETCH HELPER
+    // =========================================================
 
     async function fetchJSON(
       url,
-      options = {}
+      options = {},
+      timeoutMs = 20000
     ) {
       const controller =
         new AbortController();
@@ -104,7 +105,7 @@ export default async function handler(req, res) {
       const timeout =
         setTimeout(
           () => controller.abort(),
-          20000
+          timeoutMs
         );
 
       try {
@@ -143,9 +144,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // ---------------------------------------------------------
-    // LOAD SPORTYBET EVENT MARKETS
-    // ---------------------------------------------------------
+    // =========================================================
+    // LOAD SPORTYBET MARKETS
+    // =========================================================
 
     const eventIds =
       uniqueEvents.map(
@@ -219,9 +220,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // ---------------------------------------------------------
+    // =========================================================
     // INDIVIDUAL FALLBACK LOOKUP
-    // ---------------------------------------------------------
+    // =========================================================
 
     let individualMarketRequests = 0;
 
@@ -263,13 +264,13 @@ export default async function handler(req, res) {
           );
         }
       } catch {
-        // Never invent missing event data.
+        // Never invent market data.
       }
     }
 
-    // ---------------------------------------------------------
-    // FLATTEN MARKETS
-    // ---------------------------------------------------------
+    // =========================================================
+    // FLATTEN SPORTYBET MARKETS
+    // =========================================================
 
     function flattenMarkets(
       result
@@ -308,20 +309,16 @@ export default async function handler(req, res) {
         }
 
         const specifier =
-          market.specifier ===
-            null ||
-          market.specifier ===
-            undefined
+          market.specifier === null ||
+          market.specifier === undefined
             ? ""
             : String(
                 market.specifier
               );
 
         if (
-          market.status !==
-            null &&
-          market.status !==
-            undefined &&
+          market.status !== null &&
+          market.status !== undefined &&
           String(
             market.status
           ) === "2"
@@ -371,16 +368,14 @@ export default async function handler(req, res) {
           output.push({
             eventId:
               String(
-                result.event
-                  ?.eventId ||
-                  ""
+                result.event?.eventId ||
+                ""
               ),
 
             gameId:
               String(
-                result.event
-                  ?.gameId ||
-                  ""
+                result.event?.gameId ||
+                ""
               ),
 
             event:
@@ -388,18 +383,15 @@ export default async function handler(req, res) {
               `${result.event?.awayTeamName || ""}`.trim(),
 
             homeTeamName:
-              result.event
-                ?.homeTeamName ||
+              result.event?.homeTeamName ||
               "",
 
             awayTeamName:
-              result.event
-                ?.awayTeamName ||
+              result.event?.awayTeamName ||
               "",
 
             startTime:
-              result.event
-                ?.startTime ||
+              result.event?.startTime ||
               null,
 
             marketId,
@@ -450,9 +442,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // ---------------------------------------------------------
-    // MATCH SELECTION HELPER
-    // ---------------------------------------------------------
+    // =========================================================
+    // SELECTION COMPARISON
+    // =========================================================
 
     function sameSelection(
       a,
@@ -477,9 +469,9 @@ export default async function handler(req, res) {
       );
     }
 
-    // ---------------------------------------------------------
-    // VERIFY ORIGINALS
-    // ---------------------------------------------------------
+    // =========================================================
+    // VERIFY ORIGINAL PICKS
+    // =========================================================
 
     const verifiedOriginals =
       originals.filter(
@@ -518,14 +510,12 @@ export default async function handler(req, res) {
       }
     }
 
-    // ---------------------------------------------------------
+    // =========================================================
     // SAFE / BALANCED / RISKY
-    // ---------------------------------------------------------
+    // =========================================================
 
     const sortedByOdds =
-      [
-        ...uniqueVerified
-      ].sort(
+      [...uniqueVerified].sort(
         (a, b) =>
           Number(a.odds || 999) -
           Number(b.odds || 999)
@@ -536,7 +526,7 @@ export default async function handler(req, res) {
         1,
         Math.ceil(
           sortedByOdds.length *
-            0.5
+          0.5
         )
       );
 
@@ -545,7 +535,7 @@ export default async function handler(req, res) {
         1,
         Math.ceil(
           sortedByOdds.length *
-            0.75
+          0.75
         )
       );
 
@@ -564,9 +554,9 @@ export default async function handler(req, res) {
     const riskySelections =
       [...uniqueVerified];
 
-    // ---------------------------------------------------------
+    // =========================================================
     // PREPARE AI CANDIDATES
-    // ---------------------------------------------------------
+    // =========================================================
 
     const aiCandidates = [];
 
@@ -578,9 +568,7 @@ export default async function handler(req, res) {
           event.eventId
         ) || [];
 
-      if (
-        !options.length
-      ) {
+      if (!options.length) {
         continue;
       }
 
@@ -604,9 +592,7 @@ export default async function handler(req, res) {
             )
         );
 
-      if (
-        !candidates.length
-      ) {
+      if (!candidates.length) {
         candidates =
           options;
       }
@@ -615,10 +601,8 @@ export default async function handler(req, res) {
         candidates
           .filter(
             (option) =>
-              option.odds >=
-                1.01 &&
-              option.odds <=
-                8
+              option.odds >= 1.01 &&
+              option.odds <= 8
           )
           .sort(
             (a, b) =>
@@ -648,39 +632,63 @@ export default async function handler(req, res) {
       });
     }
 
-    // ---------------------------------------------------------
-    // GEMINI 3.6 FLASH
-    // ---------------------------------------------------------
+    // =========================================================
+    // GEMINI MODEL FALLBACK SYSTEM
+    // =========================================================
+    //
+    // Try models in order.
+    //
+    // 1. Gemini 3.8 Flash
+    // 2. Gemini 3.7 Flash
+    // 3. Gemini 3.6 Flash
+    // 4. Gemini 3.5 Flash
+    // 5. Gemini 3.5 Flash-Lite
+    //
+    // We do NOT assume every model is available to every key.
+    // A 404/403/429/500/503 can cause the next model to try.
+    //
+    // The successful model is recorded in diagnostics.
+    // =========================================================
+
+    const GEMINI_MODELS = [
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite"
+    ];
 
     let aiReturned = [];
+
+    let geminiModelUsed = null;
 
     let geminiStatus =
       GEMINI_KEY
         ? "API key detected"
         : "Gemini API key missing";
 
-    let geminiError =
-      null;
+    let geminiError = null;
 
-    let geminiRawResponse =
-      null;
+    const geminiAttempts = [];
 
-    if (
-      GEMINI_KEY &&
-      aiCandidates.length
-    ) {
-      const prompt = `
+    let geminiRawResponse = null;
+
+    // =========================================================
+    // AI PROMPT
+    // =========================================================
+
+    const prompt = `
 You are analyzing a football betting selection list.
 
 There are exactly ${aiCandidates.length} football games.
 
-YOUR MOST IMPORTANT RULE:
+IMPORTANT:
 
-Return EXACTLY ONE recommendation for EVERY game.
+You MUST return exactly ONE recommendation for EVERY game.
 
 If there are 8 games, return 8 recommendations.
 
-Each recommendation must belong to a different event.
+Every recommendation must belong to a different event.
 
 Never combine games.
 
@@ -690,7 +698,7 @@ Never invent a market.
 
 Never invent an outcome.
 
-Only choose from the SportyBet options supplied below.
+Only select from the exact SportyBet options supplied below.
 
 The exact combination of:
 
@@ -701,23 +709,23 @@ outcomeId
 
 must exist in the supplied SportyBet data.
 
-You may replace the user's original selection with another market IF that market is present in the supplied options.
+You MAY replace the user's original selection with another market if that market exists in the supplied SportyBet options.
 
-Prefer simple, understandable mainstream markets.
+Prefer understandable mainstream markets.
 
 Avoid Correct Score unless there is no reasonable alternative.
 
 Avoid extremely high odds.
 
-Do not claim that any selection is guaranteed to win.
+Do not say a selection is guaranteed.
 
 Do not use certainty language.
 
 REASON STYLE:
 
-Write one short sentence.
+Write one short natural sentence.
 
-Sound natural and conversational, like a knowledgeable football fan explaining the choice.
+Sound like a knowledgeable football fan explaining the choice.
 
 Do NOT use robotic phrases such as:
 
@@ -746,153 +754,190 @@ Required format:
 
 SPORTYBET OPTIONS:
 
-${JSON.stringify(
-  aiCandidates
-)}
+${JSON.stringify(aiCandidates)}
 `;
 
-      try {
-        const geminiURL =
-          "https://generativelanguage.googleapis.com/v1beta/models/" +
-          "gemini-3.6-flash:generateContent";
+    // =========================================================
+    // TRY EACH MODEL
+    // =========================================================
 
-        const geminiResponse =
-          await fetchJSON(
-            geminiURL,
-            {
-              method:
-                "POST",
+    if (
+      GEMINI_KEY &&
+      aiCandidates.length
+    ) {
+      for (
+        const model of
+        GEMINI_MODELS
+      ) {
+        try {
+          const geminiURL =
+            "https://generativelanguage.googleapis.com/v1beta/models/" +
+            `${model}:generateContent`;
 
-              headers: {
-                "Content-Type":
-                  "application/json",
+          const response =
+            await fetchJSON(
+              geminiURL,
+              {
+                method:
+                  "POST",
 
-                "x-goog-api-key":
-                  GEMINI_KEY
-              },
+                headers: {
+                  "Content-Type":
+                    "application/json",
 
-              body:
-                JSON.stringify({
-                  contents: [
-                    {
-                      parts: [
-                        {
-                          text:
-                            prompt
-                        }
-                      ]
+                  "x-goog-api-key":
+                    GEMINI_KEY
+                },
+
+                body:
+                  JSON.stringify({
+                    contents: [
+                      {
+                        parts: [
+                          {
+                            text:
+                              prompt
+                          }
+                        ]
+                      }
+                    ],
+
+                    generationConfig: {
+                      responseMimeType:
+                        "application/json",
+
+                      maxOutputTokens:
+                        4000
                     }
-                  ],
+                  })
+              },
+              30000
+            );
 
-                  generationConfig: {
-                    responseMimeType:
-                      "application/json"
-                  }
-                })
-            }
+          const attempt = {
+            model,
+            status:
+              response.status,
+            success:
+              response.ok,
+            error:
+              response.ok
+                ? null
+                : (
+                    response.data
+                      ?.error
+                      ?.message ||
+                    response.rawText ||
+                    "Request failed."
+                  )
+          };
+
+          geminiAttempts.push(
+            attempt
           );
 
-        geminiStatus =
-          `HTTP ${geminiResponse.status}`;
+          // ---------------------------------------------------
+          // MODEL REQUEST FAILED
+          // ---------------------------------------------------
 
-        geminiRawResponse =
-          geminiResponse.data;
+          if (!response.ok) {
+            continue;
+          }
 
-        // -----------------------------------------------------
-        // GEMINI ERROR
-        // -----------------------------------------------------
+          geminiRawResponse =
+            response.data;
 
-        if (
-          !geminiResponse.ok
-        ) {
-          geminiError =
-            geminiResponse
-              .data
-              ?.error
-              ?.message ||
-            geminiResponse.rawText ||
-            "Gemini request failed.";
-        } else {
           let text =
-            geminiResponse
-              .data
+            response.data
               ?.candidates?.[0]
               ?.content?.parts?.[0]
               ?.text ||
             "";
 
           if (!text) {
-            geminiError =
-              "Gemini returned an empty response.";
-          } else {
-            // Remove accidental Markdown JSON fences.
-            text =
-              text
-                .replace(
-                  /^```json\s*/i,
-                  ""
-                )
-                .replace(
-                  /^```\s*/i,
-                  ""
-                )
-                .replace(
-                  /\s*```$/i,
-                  ""
-                )
-                .trim();
-
-            try {
-              const parsed =
-                JSON.parse(
-                  text
-                );
-
-              if (
-                Array.isArray(
-                  parsed?.recommendations
-                )
-              ) {
-                aiReturned =
-                  parsed.recommendations;
-
-                geminiStatus =
-                  `HTTP ${geminiResponse.status} - JSON parsed successfully`;
-              } else {
-                geminiError =
-                  "Gemini responded, but no recommendations array was returned.";
-              }
-            } catch (
-              parseError
-            ) {
-              geminiError =
-                "Gemini returned invalid JSON.";
-
-              geminiRawResponse = {
-                response:
-                  geminiResponse.data,
-
-                parseError:
-                  String(
-                    parseError
-                      ?.message ||
-                    parseError
-                  )
-              };
-            }
+            continue;
           }
-        }
-      } catch (
-        error
-      ) {
-        geminiStatus =
-          "Gemini request exception";
 
-        geminiError =
-          String(
-            error?.message ||
-            error
-          );
+          // Remove Markdown JSON fences.
+          text =
+            text
+              .replace(
+                /^```json\s*/i,
+                ""
+              )
+              .replace(
+                /^```\s*/i,
+                ""
+              )
+              .replace(
+                /\s*```$/i,
+                ""
+              )
+              .trim();
+
+          let parsed = null;
+
+          try {
+            parsed =
+              JSON.parse(
+                text
+              );
+          } catch {
+            geminiAttempts[
+              geminiAttempts.length - 1
+            ].error =
+              "Model returned invalid JSON.";
+
+            continue;
+          }
+
+          if (
+            !Array.isArray(
+              parsed?.recommendations
+            )
+          ) {
+            geminiAttempts[
+              geminiAttempts.length - 1
+            ].error =
+              "Model returned no recommendations array.";
+
+            continue;
+          }
+
+          // ---------------------------------------------------
+          // WE HAVE A VALID MODEL RESPONSE
+          // ---------------------------------------------------
+
+          aiReturned =
+            parsed.recommendations;
+
+          geminiModelUsed =
+            model;
+
+          geminiStatus =
+            `HTTP ${response.status} - ${model} succeeded`;
+
+          geminiError =
+            null;
+
+          break;
+
+        } catch (
+          error
+        ) {
+          geminiAttempts.push({
+            model,
+            status:
+              "exception",
+            success:
+              false,
+            error:
+              String(
+                error?.message ||
+                error
+              )
+          });
+        }
       }
     } else if (
       !GEMINI_KEY
@@ -901,9 +946,33 @@ ${JSON.stringify(
         "No Gemini API key was found in Vercel environment variables.";
     }
 
-    // ---------------------------------------------------------
-    // VALIDATE EVERY AI RECOMMENDATION
-    // ---------------------------------------------------------
+    // =========================================================
+    // IF NO MODEL SUCCEEDED
+    // =========================================================
+
+    if (
+      !geminiModelUsed &&
+      GEMINI_KEY
+    ) {
+      const failedModels =
+        geminiAttempts
+          .map(
+            (attempt) =>
+              `${attempt.model}: ${attempt.status}`
+          )
+          .join("; ");
+
+      geminiStatus =
+        "All Gemini models failed";
+
+      geminiError =
+        failedModels ||
+        "No Gemini model returned a usable response.";
+    }
+
+    // =========================================================
+    // VALIDATE GEMINI PICKS AGAINST SPORTYBET
+    // =========================================================
 
     const aiValidated = [];
 
@@ -911,16 +980,14 @@ ${JSON.stringify(
       const recommendation of
       aiReturned
     ) {
-      if (
-        !recommendation
-      ) {
+      if (!recommendation) {
         continue;
       }
 
       const eventId =
         String(
           recommendation.eventId ||
-            ""
+          ""
         );
 
       const options =
@@ -936,16 +1003,16 @@ ${JSON.stringify(
             ) ===
               String(
                 recommendation.marketId ||
-                  ""
+                ""
               ) &&
 
             String(
               option.specifier ||
-                ""
+              ""
             ) ===
               String(
                 recommendation.specifier ||
-                  ""
+                ""
               ) &&
 
             String(
@@ -953,12 +1020,12 @@ ${JSON.stringify(
             ) ===
               String(
                 recommendation.outcomeId ||
-                  ""
+                ""
               )
         );
 
-      // Reject anything that does not exist
-      // exactly on SportyBet.
+      // Reject anything not found exactly
+      // in SportyBet's actual market data.
       if (!exact) {
         continue;
       }
@@ -986,12 +1053,11 @@ ${JSON.stringify(
       });
     }
 
-    // ---------------------------------------------------------
-    // GUARANTEE ONE VERIFIED OPTION PER GAME
-    // ---------------------------------------------------------
+    // =========================================================
+    // ONE FINAL SELECTION PER GAME
+    // =========================================================
 
-    const aiFinalSelections =
-      [];
+    const aiFinalSelections = [];
 
     for (
       const event of uniqueEvents
@@ -1001,14 +1067,11 @@ ${JSON.stringify(
           event.eventId
         ) || [];
 
-      if (
-        !options.length
-      ) {
+      if (!options.length) {
         continue;
       }
 
-      // First choice:
-      // verified Gemini recommendation.
+      // Use validated AI recommendation first.
       const aiPick =
         aiValidated.find(
           (selection) =>
@@ -1024,9 +1087,9 @@ ${JSON.stringify(
         continue;
       }
 
-      // -------------------------------------------------------
-      // REAL-DATA FALLBACK
-      // -------------------------------------------------------
+      // =======================================================
+      // REAL SPORTYBET FALLBACK
+      // =======================================================
 
       const original =
         originals.find(
@@ -1064,8 +1127,6 @@ ${JSON.stringify(
       let fallback =
         preferred[0];
 
-      // Prefer a different real market
-      // when one exists.
       if (original) {
         const different =
           preferred.find(
@@ -1082,10 +1143,7 @@ ${JSON.stringify(
         }
       }
 
-      // Last real-data fallback.
-      if (
-        !fallback
-      ) {
+      if (!fallback) {
         fallback =
           [...options]
             .filter(
@@ -1099,9 +1157,7 @@ ${JSON.stringify(
             )[0];
       }
 
-      if (
-        !fallback
-      ) {
+      if (!fallback) {
         continue;
       }
 
@@ -1119,9 +1175,9 @@ ${JSON.stringify(
       });
     }
 
-    // ---------------------------------------------------------
+    // =========================================================
     // PROFILES
-    // ---------------------------------------------------------
+    // =========================================================
 
     const profiles = {
       SAFE: {
@@ -1157,9 +1213,9 @@ ${JSON.stringify(
       }
     };
 
-    // ---------------------------------------------------------
+    // =========================================================
     // DIAGNOSTICS
-    // ---------------------------------------------------------
+    // =========================================================
 
     const diagnostics = {
       receivedSelections:
@@ -1195,13 +1251,33 @@ ${JSON.stringify(
         aiFinalSelections.length ===
         uniqueEvents.length,
 
+      // Gemini information
+      geminiApiKeyDetected:
+        Boolean(
+          GEMINI_KEY
+        ),
+
+      geminiModelUsed,
+
       geminiStatus,
 
       geminiError,
 
-      geminiApiKeyDetected:
-        Boolean(
-          GEMINI_KEY
+      geminiModelsTried:
+        geminiAttempts.map(
+          (attempt) => ({
+            model:
+              attempt.model,
+
+            status:
+              attempt.status,
+
+            success:
+              attempt.success,
+
+            error:
+              attempt.error
+          })
         ),
 
       requestedEventIds:
@@ -1230,7 +1306,7 @@ ${JSON.stringify(
           )
     };
 
-    // Keep diagnostic preview short.
+    // Short Gemini response preview
     if (
       geminiRawResponse
     ) {
@@ -1242,6 +1318,10 @@ ${JSON.stringify(
           1500
         );
     }
+
+    // =========================================================
+    // RESPONSE
+    // =========================================================
 
     return res.status(
       200
