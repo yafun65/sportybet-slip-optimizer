@@ -371,6 +371,41 @@
       white-space: nowrap;
     }
 
+    /* AI RECOMMENDED */
+
+    .profile-ai {
+      border-color: #315a48;
+      background:
+        linear-gradient(
+          180deg,
+          #0b251a 0%,
+          #091f16 100%
+        );
+    }
+
+    .profile-ai.selected {
+      border-color: #4ce39a;
+      box-shadow:
+        0 0 0 2px rgba(76,227,154,.15),
+        0 10px 30px rgba(24,169,101,.08);
+    }
+
+    .ai-badge {
+      background: #194b34;
+      color: #70edaa;
+    }
+
+    .verified-note {
+      margin-top: 9px;
+      padding: 8px 9px;
+      border-radius: 8px;
+      background: #102d20;
+      border: 1px solid #22523a;
+      color: #8fc8aa;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
     /* PROFILE SELECTION DETAILS */
 
     .profile-selections {
@@ -437,6 +472,27 @@
       font-weight: 700;
     }
 
+    .profile-tag.ai-market {
+      background: #183d2c;
+      color: #73e7a8;
+    }
+
+    /* WHY THIS SELECTION */
+
+    .profile-selection-reason {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #173529;
+      color: #8fa59b;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .profile-selection-reason strong {
+      color: #b8cbc3;
+      font-size: 10px;
+    }
+
     .profile-empty {
       color: #71877d;
       font-size: 11px;
@@ -470,6 +526,7 @@
     .selected-profile-name {
       font-size: 18px;
       font-weight: 700;
+      line-height: 1.4;
     }
 
     .generated-code {
@@ -575,6 +632,10 @@
       .profile-badge {
         margin-top: 0;
       }
+
+      .code-actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -595,7 +656,7 @@
 
       <p>
         Analyze your SportyBet selections and create
-        different risk profiles from the selections already in your booking.
+        different variance profiles from your booking.
       </p>
 
     </header>
@@ -701,8 +762,8 @@
       </div>
 
       <div class="section-subtitle">
-        Let AI organize your existing selections into three different
-        variance profiles.
+        AI will analyze your original selections and, where verified
+        SportyBet markets are available, consider alternative markets.
       </div>
 
       <button
@@ -729,8 +790,8 @@
       </div>
 
       <div class="section-subtitle">
-        Review the actual selections in each profile, then choose the
-        profile you want to use for your new booking.
+        Review the actual selections and the reason for each selection,
+        then choose the profile you want to use for your new booking.
       </div>
 
       <div class="profiles">
@@ -904,6 +965,70 @@
 
             <div
               id="riskySelections"
+              class="profile-selection-list"
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- AI RECOMMENDED -->
+
+        <div
+          id="profile-AI RECOMMENDED"
+          class="profile profile-ai"
+          onclick="selectProfile('AI RECOMMENDED')"
+        >
+
+          <div class="profile-header">
+
+            <div class="profile-icon">
+              🤖
+            </div>
+
+            <div class="profile-heading">
+
+              <h3>AI RECOMMENDED</h3>
+
+              <p id="aiRecommendedSummary">
+                AI-selected alternatives based on verified SportyBet markets.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="profile-stats">
+
+            <div class="profile-stat-main">
+              <strong id="aiRecommendedCount">0</strong>
+              selections
+              <span> · </span>
+              <span class="profile-combined">
+                <span id="aiRecommendedOdds">—</span> odds
+              </span>
+            </div>
+
+            <span class="profile-badge ai-badge">
+              AI + VERIFIED
+            </span>
+
+          </div>
+
+          <div class="verified-note">
+            AI Recommended can use alternative markets, but only when
+            the market and outcome have been verified against SportyBet data.
+          </div>
+
+          <div class="profile-selections">
+
+            <div class="profile-selections-title">
+              AI recommended selections
+            </div>
+
+            <div
+              id="aiRecommendedSelections"
               class="profile-selection-list"
             ></div>
 
@@ -1428,7 +1553,7 @@
 
 
       showStatus(
-        "AI is analyzing your selections...",
+        "AI is checking your selections and available SportyBet markets...",
         "loading"
       );
 
@@ -1541,8 +1666,12 @@
 
     function displayResults(data) {
 
-      const profiles =
-        ["SAFE", "BALANCED", "RISKY"];
+      const profiles = [
+        "SAFE",
+        "BALANCED",
+        "RISKY",
+        "AI RECOMMENDED"
+      ];
 
 
       profiles.forEach(
@@ -1558,31 +1687,44 @@
               : [];
 
 
-          const lowerProfile =
-            profile.toLowerCase();
+          let prefix;
+
+
+          if (
+            profile === "AI RECOMMENDED"
+          ) {
+
+            prefix = "aiRecommended";
+
+          } else {
+
+            prefix =
+              profile.toLowerCase();
+
+          }
 
 
           const countElement =
             document.getElementById(
-              lowerProfile + "Count"
+              prefix + "Count"
             );
 
 
           const oddsElement =
             document.getElementById(
-              lowerProfile + "Odds"
+              prefix + "Odds"
             );
 
 
           const summaryElement =
             document.getElementById(
-              lowerProfile + "Summary"
+              prefix + "Summary"
             );
 
 
           const selectionsElement =
             document.getElementById(
-              lowerProfile + "Selections"
+              prefix + "Selections"
             );
 
 
@@ -1617,7 +1759,8 @@
 
             renderProfileSelections(
               selectionsElement,
-              selections
+              selections,
+              profile
             );
 
           }
@@ -1665,7 +1808,8 @@
 
     function renderProfileSelections(
       container,
-      selections
+      selections,
+      profile
     ) {
 
       container.innerHTML = "";
@@ -1675,7 +1819,11 @@
 
         container.innerHTML = `
           <div class="profile-empty">
-            No selections were returned for this profile.
+            ${
+              profile === "AI RECOMMENDED"
+                ? "No verified alternative selections were returned for this profile."
+                : "No selections were returned for this profile."
+            }
           </div>
         `;
 
@@ -1703,6 +1851,10 @@
             selection.odds ||
             "—";
 
+          const reason =
+            selection.reason ||
+            "No explanation was provided.";
+
 
           const item =
             document.createElement("div");
@@ -1710,6 +1862,22 @@
 
           item.className =
             "profile-selection";
+
+
+          let aiMarketTag = "";
+
+
+          if (
+            profile === "AI RECOMMENDED"
+          ) {
+
+            aiMarketTag = `
+              <span class="profile-tag ai-market">
+                VERIFIED SPORTYBET MARKET
+              </span>
+            `;
+
+          }
 
 
           item.innerHTML = `
@@ -1736,6 +1904,13 @@
                 @ ${escapeHtml(String(odds))}
               </span>
 
+              ${aiMarketTag}
+
+            </div>
+
+            <div class="profile-selection-reason">
+              <strong>Why this selection?</strong>
+              ${escapeHtml(reason)}
             </div>
 
           `;
@@ -1827,8 +2002,11 @@
 
 
       const selections =
-        optimizedData[profile]
-          .selections || [];
+        Array.isArray(
+          optimizedData[profile].selections
+        )
+          ? optimizedData[profile].selections
+          : [];
 
 
       if (!selections.length) {
@@ -1856,11 +2034,23 @@
         );
 
 
-      document
-        .getElementById(
-          "profile-" + profile
-        )
-        .classList.add("selected");
+      const profileId =
+        "profile-" + profile;
+
+
+      const profileCard =
+        document.getElementById(
+          profileId
+        );
+
+
+      if (profileCard) {
+
+        profileCard.classList.add(
+          "selected"
+        );
+
+      }
 
 
       const combinedOdds =
@@ -1882,6 +2072,16 @@
           "generateSection"
         )
         .classList.add("show");
+
+
+      document
+        .getElementById(
+          "generatedCodeBox"
+        )
+        .classList.remove("show");
+
+
+      generatedShareURL = null;
 
 
       document
@@ -1919,9 +2119,15 @@
 
 
       const selections =
-        optimizedData[
-          selectedProfile
-        ].selections || [];
+        Array.isArray(
+          optimizedData[
+            selectedProfile
+          ].selections
+        )
+          ? optimizedData[
+              selectedProfile
+            ].selections
+          : [];
 
 
       if (!selections.length) {
@@ -2166,7 +2372,7 @@
 
     function escapeHtml(value) {
 
-      return String(value)
+      return String(value ?? "")
         .replace(
           /&/g,
           "&amp;"
