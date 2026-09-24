@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SportyBet Selection Optimizer</title>
 
   <style>
@@ -12,9 +12,9 @@
 
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
       background: #07130f;
-      color: #f4fff8;
+      color: #f5fff8;
+      font-family: Arial, sans-serif;
     }
 
     .container {
@@ -26,10 +26,10 @@
 
     .header {
       text-align: center;
-      padding: 18px 5px 24px;
+      padding: 15px 5px 25px;
     }
 
-    .header h1 {
+    h1 {
       margin: 0 0 8px;
       font-size: 25px;
     }
@@ -50,9 +50,9 @@
 
     label {
       display: block;
-      font-size: 13px;
-      color: #b8c9c1;
       margin-bottom: 7px;
+      color: #b8c9c1;
+      font-size: 13px;
     }
 
     input {
@@ -66,26 +66,18 @@
       outline: none;
     }
 
-    input:focus {
-      border-color: #38c878;
-    }
-
     button {
       width: 100%;
       min-height: 46px;
+      margin-top: 10px;
+      padding: 12px 15px;
       border: 0;
       border-radius: 10px;
-      padding: 12px 15px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
       background: #21a85a;
       color: white;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background: #28bd67;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     button.secondary {
@@ -99,14 +91,14 @@
     }
 
     .status {
+      display: none;
       margin-top: 12px;
       padding: 11px;
       border-radius: 9px;
       background: #091a13;
       color: #a9c0b5;
       font-size: 13px;
-      line-height: 1.45;
-      display: none;
+      line-height: 1.5;
     }
 
     .status.show {
@@ -124,22 +116,22 @@
     }
 
     .section-title {
-      font-size: 18px;
       margin: 0 0 12px;
+      font-size: 18px;
     }
 
     .selection {
+      padding: 12px;
+      margin-bottom: 9px;
       background: #091912;
       border: 1px solid #1b382c;
       border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 9px;
     }
 
     .event {
-      font-weight: 700;
+      margin-bottom: 6px;
       font-size: 15px;
-      margin-bottom: 7px;
+      font-weight: bold;
     }
 
     .market {
@@ -150,8 +142,8 @@
 
     .odds {
       margin-top: 7px;
-      font-weight: 700;
       color: #7ee7a5;
+      font-weight: bold;
     }
 
     .profiles {
@@ -160,81 +152,15 @@
     }
 
     .profile {
-      border: 1px solid #234737;
-      border-radius: 14px;
       padding: 15px;
       background: #0a1b14;
-      cursor: pointer;
-    }
-
-    .profile.selected {
-      border-color: #39d47b;
-      box-shadow: 0 0 0 1px #39d47b inset;
-    }
-
-    .profile-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 7px;
+      border: 1px solid #234737;
+      border-radius: 14px;
     }
 
     .profile-name {
       font-size: 17px;
-      font-weight: 800;
-    }
-
-    .profile-count {
-      font-size: 12px;
-      color: #9bc3ad;
-      white-space: nowrap;
-    }
-
-    .summary {
-      color: #aebfb7;
-      font-size: 13px;
-      line-height: 1.45;
-      margin-bottom: 12px;
-    }
-
-    .profile-selection {
-      padding: 10px 0;
-      border-top: 1px solid #18362a;
-    }
-
-    .profile-selection:first-of-type {
-      border-top: 0;
-    }
-
-    .profile-selection .event {
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-
-    .reason {
-      margin-top: 5px;
-      color: #91aa9e;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .code-box {
-      background: #06110c;
-      border: 1px solid #254b38;
-      border-radius: 12px;
-      padding: 14px;
-      margin-top: 12px;
-      word-break: break-all;
-    }
-
-    .code {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: #78eaa2;
-      text-align: center;
-      padding: 8px 0;
+      font-weight: bold;
     }
 
     .small {
@@ -247,14 +173,12 @@
       display: none;
     }
 
-    @media (max-width: 420px) {
-      .container {
-        padding: 15px 10px 30px;
-      }
-
-      .header h1 {
-        font-size: 22px;
-      }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #9cf0bc;
+      font-size: 12px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -270,24 +194,32 @@
 
   <!-- LOAD -->
   <div class="card">
-    <label for="bookingCode">SportyBet Booking Code</label>
+
+    <label for="bookingCode">
+      SportyBet Booking Code
+    </label>
 
     <input
       id="bookingCode"
       type="text"
       placeholder="Enter booking code e.g. JQVHY8"
-      autocomplete="off"
-    />
+    >
 
-    <button id="loadBtn">Load SportyBet Selections</button>
+    <button id="loadBtn">
+      Load SportyBet Selections
+    </button>
 
     <div id="loadStatus" class="status"></div>
+
   </div>
 
-  <!-- LOADED SELECTIONS -->
+
+  <!-- SELECTIONS -->
   <div id="selectionsCard" class="card hidden">
 
-    <h2 class="section-title">Your Selections</h2>
+    <h2 class="section-title">
+      Your Selections
+    </h2>
 
     <div id="selectionList"></div>
 
@@ -303,138 +235,153 @@
 
   </div>
 
+
   <!-- RESULTS -->
   <div id="resultsCard" class="card hidden">
 
-    <h2 class="section-title">Optimized Selections</h2>
+    <h2 class="section-title">
+      Optimized Selections
+    </h2>
 
     <div id="profiles" class="profiles"></div>
 
-    <button id="generateBtn" disabled>
-      Generate SportyBet Code
-    </button>
+  </div>
 
-    <div id="generateStatus" class="status"></div>
 
-    <div id="generatedCodeBox" class="code-box hidden">
+  <!-- DEBUG -->
+  <div id="debugCard" class="card hidden">
 
-      <div class="small">
-        Generated SportyBet booking code
-      </div>
+    <h2 class="section-title">
+      Optimizer Response
+    </h2>
 
-      <div id="generatedCode" class="code"></div>
-
-      <button id="copyBtn" class="secondary">
-        Copy Booking Code
-      </button>
-
-      <button id="openBtn" class="secondary">
-        Open SportyBet
-      </button>
-
-    </div>
+    <pre id="debugOutput"></pre>
 
   </div>
 
 </div>
 
+
 <script>
-  /*
-   * ==========================================================
-   * SPORTYBET SELECTION OPTIMIZER
-   * ==========================================================
-   *
-   * IMPORTANT:
-   * currentSelections is the single source of truth.
-   *
-   * Load SportyBet
-   *      ↓
-   * currentSelections
-   *      ↓
-   * /api/optimize
-   *      ↓
-   * SAFE / BALANCED / RISKY / AI RECOMMENDED
-   *      ↓
-   * /api/create-booking
-   *
-   * ==========================================================
-   */
+
+  // ==========================================================
+  // MAIN STATE
+  // ==========================================================
 
   let currentSelections = [];
+
   let optimizationResults = {};
+
   let selectedProfile = "SAFE";
-  let generatedShareCode = "";
-
-  const bookingCodeInput = document.getElementById("bookingCode");
-  const loadBtn = document.getElementById("loadBtn");
-  const analyzeBtn = document.getElementById("analyzeBtn");
-  const optimizeBtn = document.getElementById("optimizeBtn");
-  const generateBtn = document.getElementById("generateBtn");
-  const copyBtn = document.getElementById("copyBtn");
-  const openBtn = document.getElementById("openBtn");
-
-  const loadStatus = document.getElementById("loadStatus");
-  const optimizeStatus = document.getElementById("optimizeStatus");
-  const generateStatus = document.getElementById("generateStatus");
-
-  const selectionsCard = document.getElementById("selectionsCard");
-  const resultsCard = document.getElementById("resultsCard");
-
-  const selectionList = document.getElementById("selectionList");
-  const profilesContainer = document.getElementById("profiles");
-
-  const generatedCodeBox = document.getElementById("generatedCodeBox");
-  const generatedCode = document.getElementById("generatedCode");
 
 
-  // ----------------------------------------------------------
+  // ==========================================================
+  // ELEMENTS
+  // ==========================================================
+
+  const bookingCode =
+    document.getElementById("bookingCode");
+
+  const loadBtn =
+    document.getElementById("loadBtn");
+
+  const analyzeBtn =
+    document.getElementById("analyzeBtn");
+
+  const optimizeBtn =
+    document.getElementById("optimizeBtn");
+
+  const loadStatus =
+    document.getElementById("loadStatus");
+
+  const optimizeStatus =
+    document.getElementById("optimizeStatus");
+
+  const selectionsCard =
+    document.getElementById("selectionsCard");
+
+  const selectionList =
+    document.getElementById("selectionList");
+
+  const resultsCard =
+    document.getElementById("resultsCard");
+
+  const profiles =
+    document.getElementById("profiles");
+
+  const debugCard =
+    document.getElementById("debugCard");
+
+  const debugOutput =
+    document.getElementById("debugOutput");
+
+
+  // ==========================================================
   // STATUS
-  // ----------------------------------------------------------
+  // ==========================================================
 
-  function showStatus(element, message, type = "") {
+  function status(element, message, type) {
+
     element.textContent = message;
-    element.className = "status show " + type;
+
+    element.className =
+      "status show " +
+      (type || "");
   }
 
-  function hideStatus(element) {
-    element.textContent = "";
-    element.className = "status";
-  }
 
-
-  // ----------------------------------------------------------
-  // EXTRACT SELECTIONS FROM LOAD RESPONSE
-  // ----------------------------------------------------------
+  // ==========================================================
+  // EXTRACT SELECTIONS
+  // ==========================================================
 
   function extractSelections(data) {
 
-    const possibleArrays = [
+    const possibilities = [
+
       data?.selections,
+
       data?.booking?.selections,
+
       data?.data?.selections,
+
       data?.booking?.data?.selections,
+
       data?.booking?.data?.outcomes,
+
       data?.data?.outcomes
+
     ];
 
-    for (const arr of possibleArrays) {
-      if (Array.isArray(arr) && arr.length > 0) {
-        return arr;
+    for (const item of possibilities) {
+
+      if (
+        Array.isArray(item) &&
+        item.length > 0
+      ) {
+
+        return item;
+
       }
+
     }
 
     return [];
+
   }
 
 
-  // ----------------------------------------------------------
-  // NORMALIZE SELECTION
-  // ----------------------------------------------------------
+  // ==========================================================
+  // NORMALIZE
+  // ==========================================================
 
   function normalizeSelection(item) {
 
     return {
-      event: item?.event || item?.eventName || "Unknown event",
+
+      event:
+        item?.event ||
+        item?.eventName ||
+        "Unknown event",
 
       market:
         item?.market ||
@@ -447,7 +394,8 @@
         item?.outcomeName ||
         "Unknown pick",
 
-      odds: Number(item?.odds || 0),
+      odds:
+        Number(item?.odds || 0),
 
       eventId:
         item?.eventId ||
@@ -477,775 +425,55 @@
         item?.startTime ||
         item?.start_time ||
         null
+
     };
+
   }
 
 
-  // ----------------------------------------------------------
-  // DISPLAY ORIGINAL SELECTIONS
-  // ----------------------------------------------------------
+  // ==========================================================
+  // LOAD SPORTYBET
+  // ==========================================================
 
-  function renderOriginalSelections() {
+  loadBtn.addEventListener(
+    "click",
+    async function() {
 
-    selectionList.innerHTML = "";
+      const code =
+        bookingCode.value.trim();
 
-    if (!currentSelections.length) {
-      selectionList.innerHTML =
-        '<div class="small">No selections found.</div>';
-      return;
-    }
+      if (!code) {
 
-    currentSelections.forEach((selection, index) => {
-
-      const div = document.createElement("div");
-
-      div.className = "selection";
-
-      div.innerHTML = `
-        <div class="event">
-          ${index + 1}. ${escapeHtml(selection.event)}
-        </div>
-
-        <div class="market">
-          ${escapeHtml(selection.market)}
-          — <strong>${escapeHtml(selection.pick)}</strong>
-        </div>
-
-        <div class="odds">
-          Odds: ${
-            Number.isFinite(selection.odds) && selection.odds > 0
-              ? selection.odds.toFixed(2)
-              : "-"
-          }
-        </div>
-      `;
-
-      selectionList.appendChild(div);
-    });
-  }
-
-
-  // ----------------------------------------------------------
-  // LOAD SPORTYBET CODE
-  // ----------------------------------------------------------
-
-  loadBtn.addEventListener("click", async () => {
-
-    const code = bookingCodeInput.value.trim();
-
-    if (!code) {
-      showStatus(
-        loadStatus,
-        "Enter a SportyBet booking code first.",
-        "error"
-      );
-      return;
-    }
-
-    loadBtn.disabled = true;
-    loadBtn.textContent = "Loading...";
-
-    hideStatus(loadStatus);
-
-    // Clear old data
-    currentSelections = [];
-    optimizationResults = {};
-    generatedShareCode = "";
-
-    resultsCard.classList.add("hidden");
-    selectionsCard.classList.add("hidden");
-    generatedCodeBox.classList.add("hidden");
-    generateBtn.disabled = true;
-
-    try {
-
-      const response = await fetch("/api/load-slip", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          code: code
-        })
-      });
-
-      const text = await response.text();
-
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(
-          "The server returned an invalid response."
+        status(
+          loadStatus,
+          "Enter a SportyBet booking code first.",
+          "error"
         );
+
+        return;
       }
 
-      if (!response.ok) {
-        throw new Error(
-          data?.error ||
-          data?.message ||
-          "Could not load the SportyBet booking."
-        );
-      }
+      loadBtn.disabled = true;
 
-      const rawSelections = extractSelections(data);
-
-      currentSelections = rawSelections
-        .map(normalizeSelection)
-        .filter(selection => {
-
-          return (
-            selection.eventId &&
-            selection.marketId &&
-            selection.outcomeId
-          );
-        });
-
-      if (!currentSelections.length) {
-
-        throw new Error(
-          "The booking loaded, but no valid selections were found."
-        );
-      }
-
-      renderOriginalSelections();
-
-      selectionsCard.classList.remove("hidden");
-
-      showStatus(
-        loadStatus,
-        `${currentSelections.length} selection${
-          currentSelections.length === 1 ? "" : "s"
-        } loaded successfully.`,
-        "success"
-      );
-
-    } catch (error) {
+      loadBtn.textContent =
+        "Loading...";
 
       currentSelections = [];
 
-      showStatus(
-        loadStatus,
-        error?.message ||
-        "Something went wrong while loading the booking.",
-        "error"
+      resultsCard.classList.add(
+        "hidden"
       );
 
-    } finally {
-
-      loadBtn.disabled = false;
-      loadBtn.textContent = "Load SportyBet Selections";
-    }
-  });
-
-
-  // ----------------------------------------------------------
-  // ANALYZE
-  // ----------------------------------------------------------
-
-  analyzeBtn.addEventListener("click", () => {
-
-    if (!currentSelections.length) {
-
-      showStatus(
-        optimizeStatus,
-        "Load your selections first.",
-        "error"
-      );
-
-      return;
-    }
-
-    const total = currentSelections.length;
-
-    const odds = currentSelections
-      .map(x => Number(x.odds))
-      .filter(x => Number.isFinite(x) && x > 0);
-
-    const combinedOdds = odds.reduce(
-      (total, value) => total * value,
-      1
-    );
-
-    showStatus(
-      optimizeStatus,
-      `${total} selections loaded${
-        odds.length
-          ? ` • Combined odds: ${combinedOdds.toFixed(2)}`
-          : ""
-      }. Ready for optimization.`,
-      "success"
-    );
-  });
-
-
-  // ----------------------------------------------------------
-  // OPTIMIZE
-  // ----------------------------------------------------------
-
-  optimizeBtn.addEventListener("click", async () => {
-
-    if (!currentSelections.length) {
-
-      showStatus(
-        optimizeStatus,
-        "There are no selections to optimize.",
-        "error"
-      );
-
-      return;
-    }
-
-    optimizeBtn.disabled = true;
-    optimizeBtn.textContent = "Optimizing...";
-
-    hideStatus(optimizeStatus);
-
-    try {
-
-      /*
-       * THIS IS THE IMPORTANT FIX.
-       *
-       * We send the actual persistent currentSelections array.
-       */
-
-      const payload = {
-        selections: currentSelections
-      };
-
-      console.log(
-        "Sending selections to /api/optimize:",
-        payload
-      );
-
-      const response = await fetch("/api/optimize", {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify(payload)
-      });
-
-      const text = await response.text();
-
-      let data;
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(
-          "The optimizer returned an invalid response."
-        );
-      }
-
-      if (!response.ok) {
-
-        throw new Error(
-          data?.error ||
-          data?.message ||
-          "Optimization failed."
-        );
-      }
-
-      /*
-       * Backend normally returns:
-       *
-       * {
-       *   success: true,
-       *   profiles: {
-       *      SAFE: {...},
-       *      BALANCED: {...},
-       *      RISKY: {...},
-       *      "AI RECOMMENDED": {...}
-       *   }
-       * }
-       */
-
-      optimizationResults =
-        data?.profiles ||
-        data ||
-        {};
-
-      const profileNames = [
-        "SAFE",
-        "BALANCED",
-        "RISKY",
-        "AI RECOMMENDED"
-      ];
-
-      const hasProfiles = profileNames.some(
-        name => optimizationResults?.[name]
-      );
-
-      
-      }
-
-      renderProfiles();
-
-      resultsCard.classList.remove("hidden");
-
-      showStatus(
-        optimizeStatus,
-        "Optimization complete.",
-        "success"
-      );
-if (!hasProfiles) {
-
-  profilesContainer.innerHTML = `
-    <div class="selection">
-      <div class="event">
-        Optimizer Diagnostic
-      </div>
-
-      <div class="market">
-        ${escapeHtml(
-          JSON.stringify(
-            data,
-            null,
-            2
-          )
-        )}
-      </div>
-    </div>
-  `;
-
-  resultsCard.classList.remove("hidden");
-
-  showStatus(
-    optimizeStatus,
-    "Diagnostic response received. Check the result below.",
-    "success"
-  );
-
-  return;
-}
-    } catch (error) {
-
-      console.error(error);
-
-      showStatus(
-        optimizeStatus,
-        error?.message ||
-        "Could not optimize the selections.",
-        "error"
-      );
-
-    } finally {
-
-      optimizeBtn.disabled = false;
-      optimizeBtn.textContent = "Optimize My Selections";
-    }
-  });
-
-
-  // ----------------------------------------------------------
-  // PROFILE HELPERS
-  // ----------------------------------------------------------
-
-  function getProfile(profileName) {
-
-    return (
-      optimizationResults?.[profileName] ||
-      {}
-    );
-  }
-
-
-  function getProfileSelections(profile) {
-
-    const possibleArrays = [
-      profile?.selections,
-      profile?.recommendedSelections,
-      profile?.picks,
-      profile?.items
-    ];
-
-    for (const arr of possibleArrays) {
-
-      if (Array.isArray(arr)) {
-        return arr;
-      }
-    }
-
-    return [];
-  }
-
-
-  function getSummary(profileName, profile) {
-
-    if (profile?.summary) {
-      return profile.summary;
-    }
-
-    const defaults = {
-
-      SAFE:
-        "I’ve trimmed this down to the less aggressive picks.",
-
-      BALANCED:
-        "A middle-ground mix — not too cautious, not too aggressive.",
-
-      RISKY:
-        "This keeps more of the action, but there’s less room for mistakes.",
-
-      "AI RECOMMENDED":
-        "I looked at the available SportyBet markets and picked the options that fit the games better."
-    };
-
-    return defaults[profileName] || "";
-  }
-
-
-  // ----------------------------------------------------------
-  // COMBINED ODDS
-  // ----------------------------------------------------------
-
-  function formatCombinedOdds(selections) {
-
-    if (!Array.isArray(selections) || !selections.length) {
-      return "-";
-    }
-
-    const validOdds = selections
-      .map(selection => Number(selection?.odds))
-      .filter(
-        odds =>
-          Number.isFinite(odds) &&
-          odds > 0
-      );
-
-    if (!validOdds.length) {
-      return "-";
-    }
-
-    const combined = validOdds.reduce(
-      (total, odds) => total * odds,
-      1
-    );
-
-    return combined.toFixed(2);
-  }
-
-
-  // ----------------------------------------------------------
-  // RENDER PROFILES
-  // ----------------------------------------------------------
-
-  function renderProfiles() {
-
-    profilesContainer.innerHTML = "";
-
-    const profileNames = [
-      "SAFE",
-      "BALANCED",
-      "RISKY",
-      "AI RECOMMENDED"
-    ];
-
-    let availableProfileFound = false;
-
-    profileNames.forEach(profileName => {
-
-      const profile = getProfile(profileName);
-
-      const selections =
-        getProfileSelections(profile);
-
-      /*
-       * Do not show a fake empty profile.
-       */
-
-      if (!selections.length) {
-        return;
-      }
-
-      availableProfileFound = true;
-
-      const card =
-        document.createElement("div");
-
-      card.className =
-        "profile" +
-        (
-          selectedProfile === profileName
-            ? " selected"
-            : ""
-        );
-
-      card.dataset.profile =
-        profileName;
-
-      const summary =
-        getSummary(
-          profileName,
-          profile
-        );
-
-      const combinedOdds =
-        formatCombinedOdds(
-          selections
-        );
-
-      card.innerHTML = `
-
-        <div class="profile-header">
-
-          <div class="profile-name">
-            ${escapeHtml(profileName)}
-          </div>
-
-          <div class="profile-count">
-            ${selections.length} selections
-          </div>
-
-        </div>
-
-        <div class="summary">
-          ${escapeHtml(summary)}
-        </div>
-
-        <div class="small">
-          Combined odds: ${combinedOdds}
-        </div>
-
-        <div class="profile-selections"></div>
-      `;
-
-      const list =
-        card.querySelector(
-          ".profile-selections"
-        );
-
-      selections.forEach(
-        (selection, index) => {
-
-          const row =
-            document.createElement("div");
-
-          row.className =
-            "profile-selection";
-
-          const reason =
-            selection?.reason ||
-            "";
-
-          row.innerHTML = `
-
-            <div class="event">
-              ${index + 1}.
-              ${escapeHtml(
-                selection?.event ||
-                selection?.eventName ||
-                "Unknown event"
-              )}
-            </div>
-
-            <div class="market">
-              ${escapeHtml(
-                selection?.market ||
-                selection?.marketName ||
-                ""
-              )}
-              —
-              <strong>
-                ${escapeHtml(
-                  selection?.pick ||
-                  selection?.outcome ||
-                  selection?.outcomeName ||
-                  ""
-                )}
-              </strong>
-
-              ${
-                Number(selection?.odds) > 0
-                  ? ` • ${Number(selection.odds).toFixed(2)}`
-                  : ""
-              }
-            </div>
-
-            ${
-              reason
-                ? `
-                  <div class="reason">
-                    ${escapeHtml(reason)}
-                  </div>
-                `
-                : ""
-            }
-          `;
-
-          list.appendChild(row);
-        }
-      );
-
-      card.addEventListener(
-        "click",
-        () => {
-
-          selectedProfile =
-            profileName;
-
-          document
-            .querySelectorAll(".profile")
-            .forEach(
-              item =>
-                item.classList.remove(
-                  "selected"
-                )
-            );
-
-          card.classList.add(
-            "selected"
-          );
-
-          generateBtn.disabled =
-            false;
-
-          hideStatus(
-            generateStatus
-          );
-        }
-      );
-
-      profilesContainer.appendChild(
-        card
-      );
-    });
-
-    if (availableProfileFound) {
-
-      generateBtn.disabled =
-        false;
-
-      const defaultCard =
-        document.querySelector(
-          `.profile[data-profile="${CSS.escape(selectedProfile)}"]`
-        );
-
-      if (defaultCard) {
-        defaultCard.classList.add(
-          "selected"
-        );
-      }
-
-    } else {
-
-      profilesContainer.innerHTML = `
-        <div class="small">
-          No verified selections were returned.
-        </div>
-      `;
-
-      generateBtn.disabled =
-        true;
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // GENERATE SPORTYBET BOOKING
-  // ----------------------------------------------------------
-
-  generateBtn.addEventListener(
-    "click",
-    async () => {
-
-      const profile =
-        getProfile(
-          selectedProfile
-        );
-
-      const selections =
-        getProfileSelections(
-          profile
-        );
-
-      if (!selections.length) {
-
-        showStatus(
-          generateStatus,
-          "The selected profile has no selections.",
-          "error"
-        );
-
-        return;
-      }
-
-      /*
-       * Only send selections that have the
-       * exact IDs required by SportyBet.
-       */
-
-      const validSelections =
-        selections
-          .map(selection => ({
-
-            eventId:
-              selection?.eventId ||
-              selection?.event_id ||
-              "",
-
-            marketId:
-              selection?.marketId ||
-              selection?.market_id ||
-              "",
-
-            specifier:
-              selection?.specifier ??
-              null,
-
-            outcomeId:
-              selection?.outcomeId ||
-              selection?.outcome_id ||
-              ""
-
-          }))
-          .filter(selection => {
-
-            return (
-              selection.eventId &&
-              selection.marketId &&
-              selection.outcomeId
-            );
-          });
-
-      if (
-        validSelections.length !==
-        selections.length
-      ) {
-
-        showStatus(
-          generateStatus,
-          "Some selections are missing SportyBet IDs and cannot be used to create a booking.",
-          "error"
-        );
-
-        return;
-      }
-
-      generateBtn.disabled =
-        true;
-
-      generateBtn.textContent =
-        "Generating...";
-
-      hideStatus(
-        generateStatus
+      debugCard.classList.add(
+        "hidden"
       );
 
       try {
 
         const response =
           await fetch(
-            "/api/create-booking",
+            "/api/load-slip",
             {
-
               method: "POST",
 
               headers: {
@@ -1254,8 +482,7 @@ if (!hasProfiles) {
               },
 
               body: JSON.stringify({
-                selections:
-                  validSelections
+                code: code
               })
             }
           );
@@ -1266,47 +493,339 @@ if (!hasProfiles) {
         let data;
 
         try {
+
           data =
             JSON.parse(text);
+
         } catch {
+
           throw new Error(
-            "The booking server returned an invalid response."
+            "Invalid response from /api/load-slip."
           );
+
         }
 
         if (!response.ok) {
 
           throw new Error(
             data?.error ||
-            data?.message ||
-            "Could not create the SportyBet booking."
+            "Could not load the booking."
           );
+
         }
 
+        const raw =
+          extractSelections(data);
+
+        currentSelections =
+          raw
+            .map(normalizeSelection)
+            .filter(
+              x =>
+                x.eventId &&
+                x.marketId &&
+                x.outcomeId
+            );
+
         if (
-          !data?.shareCode
+          currentSelections.length === 0
         ) {
 
           throw new Error(
-            "SportyBet did not return a booking code."
+            "The booking loaded, but no valid selections were found."
           );
+
         }
 
-        generatedShareCode =
-          String(
-            data.shareCode
-          );
+        renderSelections();
 
-        generatedCode.textContent =
-          generatedShareCode;
-
-        generatedCodeBox.classList.remove(
+        selectionsCard.classList.remove(
           "hidden"
         );
 
-        showStatus(
-          generateStatus,
-          "SportyBet booking code created successfully.",
+        status(
+          loadStatus,
+          currentSelections.length +
+          " selections loaded successfully.",
+          "success"
+        );
+
+      } catch (error) {
+
+        status(
+          loadStatus,
+          error?.message ||
+          "Loading failed.",
+          "error"
+        );
+
+      } finally {
+
+        loadBtn.disabled = false;
+
+        loadBtn.textContent =
+          "Load SportyBet Selections";
+
+      }
+
+    }
+  );
+
+
+  // ==========================================================
+  // DISPLAY SELECTIONS
+  // ==========================================================
+
+  function renderSelections() {
+
+    selectionList.innerHTML = "";
+
+    currentSelections.forEach(
+      function(selection, index) {
+
+        const div =
+          document.createElement("div");
+
+        div.className =
+          "selection";
+
+        div.innerHTML = `
+
+          <div class="event">
+            ${index + 1}.
+            ${escapeHtml(selection.event)}
+          </div>
+
+          <div class="market">
+            ${escapeHtml(selection.market)}
+            —
+            <strong>
+              ${escapeHtml(selection.pick)}
+            </strong>
+          </div>
+
+          <div class="odds">
+            Odds:
+            ${
+              selection.odds > 0
+                ? selection.odds.toFixed(2)
+                : "-"
+            }
+          </div>
+
+        `;
+
+        selectionList.appendChild(
+          div
+        );
+
+      }
+    );
+
+  }
+
+
+  // ==========================================================
+  // ANALYZE
+  // ==========================================================
+
+  analyzeBtn.addEventListener(
+    "click",
+    function() {
+
+      if (
+        currentSelections.length === 0
+      ) {
+
+        status(
+          optimizeStatus,
+          "Load your selections first.",
+          "error"
+        );
+
+        return;
+      }
+
+      status(
+        optimizeStatus,
+        currentSelections.length +
+        " selections are ready for optimization.",
+        "success"
+      );
+
+    }
+  );
+
+
+  // ==========================================================
+  // OPTIMIZE
+  // ==========================================================
+
+  optimizeBtn.addEventListener(
+    "click",
+    async function() {
+
+      if (
+        currentSelections.length === 0
+      ) {
+
+        status(
+          optimizeStatus,
+          "There are no selections to optimize.",
+          "error"
+        );
+
+        return;
+      }
+
+      optimizeBtn.disabled = true;
+
+      optimizeBtn.textContent =
+        "Optimizing...";
+
+      debugCard.classList.add(
+        "hidden"
+      );
+
+      try {
+
+        // THIS IS THE IMPORTANT PART.
+        // The exact loaded selections are sent here.
+
+        const payload = {
+          selections:
+            currentSelections
+        };
+
+        console.log(
+          "OPTIMIZE PAYLOAD:",
+          payload
+        );
+
+        const response =
+          await fetch(
+            "/api/optimize",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify(
+                  payload
+                )
+            }
+          );
+
+        const text =
+          await response.text();
+
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(text);
+
+        } catch {
+
+          data = {
+            rawResponse: text
+          };
+
+        }
+
+
+        // SHOW EXACT SERVER RESPONSE
+
+        debugCard.classList.remove(
+          "hidden"
+        );
+
+        debugOutput.textContent =
+          JSON.stringify(
+            data,
+            null,
+            2
+          );
+
+
+        // Check HTTP status
+
+        if (!response.ok) {
+
+          throw new Error(
+            data?.error ||
+            data?.message ||
+            "Optimizer request failed."
+          );
+
+        }
+
+
+        // Check for profiles
+
+        optimizationResults =
+          data?.profiles ||
+          data ||
+          {};
+
+        const hasProfiles =
+          [
+            "SAFE",
+            "BALANCED",
+            "RISKY",
+            "AI RECOMMENDED"
+          ].some(
+            name =>
+              optimizationResults?.[name]
+          );
+
+
+        if (!hasProfiles) {
+
+          resultsCard.classList.remove(
+            "hidden"
+          );
+
+          profiles.innerHTML = `
+            <div class="selection">
+              <div class="event">
+                No profiles returned yet.
+              </div>
+
+              <div class="market">
+                The exact response from the optimizer
+                is shown below.
+              </div>
+            </div>
+          `;
+
+          status(
+            optimizeStatus,
+            "Diagnostic response received.",
+            "success"
+          );
+
+          return;
+
+        }
+
+
+        // NORMAL PROFILE DISPLAY
+
+        renderProfiles();
+
+        resultsCard.classList.remove(
+          "hidden"
+        );
+
+        status(
+          optimizeStatus,
+          "Optimization complete.",
           "success"
         );
 
@@ -1314,115 +833,102 @@ if (!hasProfiles) {
 
         console.error(error);
 
-        showStatus(
-          generateStatus,
+        status(
+          optimizeStatus,
           error?.message ||
-          "Could not generate the SportyBet code.",
+          "Optimization failed.",
           "error"
         );
 
       } finally {
 
-        generateBtn.disabled =
-          false;
+        optimizeBtn.disabled = false;
 
-        generateBtn.textContent =
-          "Generate SportyBet Code";
+        optimizeBtn.textContent =
+          "Optimize My Selections";
+
       }
+
     }
   );
 
 
-  // ----------------------------------------------------------
-  // COPY CODE
-  // ----------------------------------------------------------
+  // ==========================================================
+  // RENDER PROFILES
+  // ==========================================================
 
-  copyBtn.addEventListener(
-    "click",
-    async () => {
+  function renderProfiles() {
 
-      if (!generatedShareCode) {
-        return;
-      }
+    profiles.innerHTML = "";
 
-      try {
+    const names = [
+      "SAFE",
+      "BALANCED",
+      "RISKY",
+      "AI RECOMMENDED"
+    ];
 
-        await navigator.clipboard.writeText(
-          generatedShareCode
-        );
+    names.forEach(
+      function(name) {
 
-        showStatus(
-          generateStatus,
-          "Booking code copied.",
-          "success"
-        );
+        const profile =
+          optimizationResults?.[name];
 
-      } catch {
+        if (!profile) {
+          return;
+        }
 
-        /*
-         * Fallback for browsers where
-         * clipboard access is unavailable.
-         */
+        const selections =
+          Array.isArray(
+            profile.selections
+          )
+            ? profile.selections
+            : [];
 
-        const area =
+        const card =
           document.createElement(
-            "textarea"
+            "div"
           );
 
-        area.value =
-          generatedShareCode;
+        card.className =
+          "profile";
 
-        document.body.appendChild(
-          area
+        card.innerHTML = `
+
+          <div class="profile-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="small">
+            ${
+              selections.length
+            } selections
+          </div>
+
+          <div class="small">
+            ${
+              escapeHtml(
+                profile.summary ||
+                ""
+              )
+            }
+          </div>
+
+        `;
+
+        profiles.appendChild(
+          card
         );
 
-        area.select();
-
-        document.execCommand(
-          "copy"
-        );
-
-        area.remove();
-
-        showStatus(
-          generateStatus,
-          "Booking code copied.",
-          "success"
-        );
       }
-    }
-  );
+    );
+
+  }
 
 
-  // ----------------------------------------------------------
-  // OPEN SPORTYBET
-  // ----------------------------------------------------------
-
-  openBtn.addEventListener(
-    "click",
-    () => {
-
-      if (!generatedShareCode) {
-        return;
-      }
-
-      const url =
-        "https://www.sportybet.com/ng/?shareCode=" +
-        encodeURIComponent(
-          generatedShareCode
-        );
-
-      window.open(
-        url,
-        "_blank"
-      );
-    }
-  );
-
-
-  // ----------------------------------------------------------
-  // HTML ESCAPE
-  // ----------------------------------------------------------
+  // ==========================================================
+  // ESCAPE HTML
+  // ==========================================================
 
   function escapeHtml(value) {
 
@@ -1449,6 +955,7 @@ if (!hasProfiles) {
         /'/g,
         "&#039;"
       );
+
   }
 
 </script>
