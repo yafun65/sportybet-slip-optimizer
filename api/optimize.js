@@ -548,8 +548,84 @@ Return JSON only.
     }
 
 
-    const recommendedSelections =
-      result["AI RECOMMENDED"].selections;
+    const uniqueOriginalEventIds = [
+  ...new Set(
+    selections
+      .map(selection => String(selection?.eventId || "").trim())
+      .filter(Boolean)
+  )
+];
+
+const verifiedEventIds = new Set(
+  verifiedEvents.map(event =>
+    String(event.eventId)
+  )
+);
+
+const missingVerifiedEvents =
+  uniqueOriginalEventIds.filter(
+    eventId =>
+      !verifiedEventIds.has(eventId)
+  );
+
+if (missingVerifiedEvents.length > 0) {
+
+  return res.status(502).json({
+    error:
+      "SportyBet markets could not be verified for one or more games.",
+    missingEventIds:
+      missingVerifiedEvents
+  });
+
+}
+
+if (
+  recommendedSelections.length !==
+  uniqueOriginalEventIds.length
+) {
+
+  return res.status(502).json({
+    error:
+      `AI RECOMMENDED must contain exactly one recommendation for each game. Expected ${uniqueOriginalEventIds.length}, but AI returned ${recommendedSelections.length}.`
+  });
+
+}
+
+const recommendedEventIds =
+  recommendedSelections.map(
+    selection =>
+      String(selection?.eventId || "")
+  );
+
+const uniqueRecommendedEventIds =
+  new Set(recommendedEventIds);
+
+if (
+  uniqueRecommendedEventIds.size !==
+  recommendedSelections.length
+) {
+
+  return res.status(502).json({
+    error:
+      "AI RECOMMENDED contains more than one selection for the same game."
+  });
+
+}
+
+for (const eventId of uniqueOriginalEventIds) {
+
+  if (
+    !uniqueRecommendedEventIds.has(eventId)
+  ) {
+
+    return res.status(502).json({
+      error:
+        `AI RECOMMENDED is missing a recommendation for event ${eventId}.`
+    });
+
+  }
+
+}
 
 
     for (
