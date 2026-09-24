@@ -1,48 +1,49 @@
+export const maxDuration = 60;
+
 export default async function handler(req, res) {
+  const eventId = "sr:match:68932720";
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 5000);
+
   try {
-    const eventId = "sr:match:68932720";
+    const started = Date.now();
 
     const response = await fetch(
-      `https://sportybet-api.onrender.com/event-markets/${encodeURIComponent(eventId)}`
+      `https://sportybet-api.onrender.com/event-markets/${encodeURIComponent(eventId)}`,
+      {
+        signal: controller.signal
+      }
     );
 
-    const data = await response.json();
+    const elapsed = Date.now() - started;
+
+    const text = await response.text();
 
     return res.status(200).json({
       success: true,
       renderStatus: response.status,
       renderOk: response.ok,
-      marketCount: Array.isArray(data?.markets)
-        ? data.markets.length
-        : 0,
-      firstMarket: data?.markets?.[0] || null
+      responseTimeMs: elapsed,
+      responseLength: text.length,
+      preview: text.slice(0, 500)
     });
 
   } catch (error) {
     return res.status(200).json({
       success: false,
-      error: error?.message || String(error)
+      error: error?.name || "Unknown error",
+      message: error?.message || String(error),
+      explanation:
+        error?.name === "AbortError"
+          ? "Render did not respond within 5 seconds."
+          : "Vercel could not complete the request to Render."
     });
+
+  } finally {
+    clearTimeout(timeout);
   }
 }
-
-Deploy it, then open:
-
-"Test Vercel → Render connection" (https://reference-url-citation.invalid/0)
-
-Send me the result
-
-We're looking for something like:
-
-{
-  "success": true,
-  "renderStatus": 200,
-  "renderOk": true,
-  "marketCount": 41,
-  "firstMarket": {
-    "marketId": "1",
-    "market": "1X2"
-  }
-}
-
-If we get that, we've isolated the problem to the optimizer/Gemini stage, and I'll fix that part next.
