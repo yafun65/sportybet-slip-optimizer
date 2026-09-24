@@ -27,9 +27,14 @@ export default async function handler(req, res) {
       process.env.GOOGLE_API_KEY ||
       "";
 
+    // ---------------------------------------------------------
+    // NORMALIZE ORIGINAL SELECTIONS
+    // ---------------------------------------------------------
+
     const originals = selections
       .map((s) => ({
-        event: s.event ||
+        event:
+          s.event ||
           `${s.homeTeamName || ""} vs ${s.awayTeamName || ""}`.trim(),
 
         eventId: String(s.eventId || ""),
@@ -48,12 +53,17 @@ export default async function handler(req, res) {
         odds: Number(s.odds || 0),
         startTime: s.startTime || null
       }))
-      .filter((s) => s.eventId && s.gameId);
+      .filter(
+        (s) =>
+          s.eventId &&
+          s.gameId
+      );
 
     if (!originals.length) {
       return res.status(400).json({
         success: false,
-        error: "The selections do not contain valid SportyBet event IDs."
+        error:
+          "The selections do not contain valid SportyBet event IDs."
       });
     }
 
@@ -66,7 +76,9 @@ export default async function handler(req, res) {
     for (const selection of originals) {
       if (
         !uniqueEvents.some(
-          (event) => event.eventId === selection.eventId
+          (event) =>
+            event.eventId ===
+            selection.eventId
         )
       ) {
         uniqueEvents.push({
@@ -79,28 +91,43 @@ export default async function handler(req, res) {
     }
 
     // ---------------------------------------------------------
-    // FETCH JSON HELPER
+    // FETCH JSON
     // ---------------------------------------------------------
 
-    async function fetchJSON(url, options = {}) {
-      const controller = new AbortController();
+    async function fetchJSON(
+      url,
+      options = {}
+    ) {
+      const controller =
+        new AbortController();
 
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 20000);
+      const timeout =
+        setTimeout(
+          () => controller.abort(),
+          20000
+        );
 
       try {
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal
-        });
+        const response =
+          await fetch(
+            url,
+            {
+              ...options,
+              signal:
+                controller.signal
+            }
+          );
 
-        const text = await response.text();
+        const rawText =
+          await response.text();
 
         let data = null;
 
         try {
-          data = JSON.parse(text);
+          data =
+            JSON.parse(
+              rawText
+            );
         } catch {
           data = null;
         }
@@ -109,7 +136,7 @@ export default async function handler(req, res) {
           ok: response.ok,
           status: response.status,
           data,
-          rawText: text
+          rawText
         };
       } finally {
         clearTimeout(timeout);
@@ -117,61 +144,95 @@ export default async function handler(req, res) {
     }
 
     // ---------------------------------------------------------
-    // LOAD SPORTYBET MARKETS
+    // LOAD SPORTYBET EVENT MARKETS
     // ---------------------------------------------------------
 
-    const eventIds = uniqueEvents.map(
-      (event) => event.eventId
-    );
+    const eventIds =
+      uniqueEvents.map(
+        (event) =>
+          event.eventId
+      );
 
     let batchData = null;
 
     try {
       const batchURL =
         `${RENDER_BASE}/event-markets?eventIds=` +
-        encodeURIComponent(eventIds.join(","));
+        encodeURIComponent(
+          eventIds.join(",")
+        );
 
-      const batchResponse = await fetchJSON(batchURL);
+      const batchResponse =
+        await fetchJSON(
+          batchURL
+        );
 
-      if (batchResponse.ok && batchResponse.data) {
-        batchData = batchResponse.data;
+      if (
+        batchResponse.ok &&
+        batchResponse.data
+      ) {
+        batchData =
+          batchResponse.data;
       }
     } catch {
       batchData = null;
     }
 
-    const marketMap = new Map();
+    const marketMap =
+      new Map();
 
     let batchResults = [];
 
-    if (Array.isArray(batchData)) {
-      batchResults = batchData;
-    } else if (Array.isArray(batchData?.results)) {
-      batchResults = batchData.results;
+    if (
+      Array.isArray(
+        batchData
+      )
+    ) {
+      batchResults =
+        batchData;
+    } else if (
+      Array.isArray(
+        batchData?.results
+      )
+    ) {
+      batchResults =
+        batchData.results;
     }
 
-    for (const result of batchResults) {
+    for (
+      const result of batchResults
+    ) {
       if (
         result &&
         result.success &&
         result.event?.eventId &&
-        Array.isArray(result.markets)
+        Array.isArray(
+          result.markets
+        )
       ) {
         marketMap.set(
-          String(result.event.eventId),
+          String(
+            result.event.eventId
+          ),
           result
         );
       }
     }
 
     // ---------------------------------------------------------
-    // FALLBACK: INDIVIDUAL EVENT LOOKUP
+    // INDIVIDUAL FALLBACK LOOKUP
     // ---------------------------------------------------------
 
     let individualMarketRequests = 0;
 
-    for (const event of uniqueEvents) {
-      if (marketMap.has(event.eventId)) {
+    for (
+      const event of uniqueEvents
+    ) {
+      if (
+        marketMap.has(
+          event.eventId
+        )
+      ) {
         continue;
       }
 
@@ -180,14 +241,21 @@ export default async function handler(req, res) {
 
         const url =
           `${RENDER_BASE}/event-markets/` +
-          encodeURIComponent(event.eventId);
+          encodeURIComponent(
+            event.eventId
+          );
 
-        const response = await fetchJSON(url);
+        const response =
+          await fetchJSON(
+            url
+          );
 
         if (
           response.ok &&
           response.data?.success &&
-          Array.isArray(response.data?.markets)
+          Array.isArray(
+            response.data?.markets
+          )
         ) {
           marketMap.set(
             event.eventId,
@@ -195,75 +263,106 @@ export default async function handler(req, res) {
           );
         }
       } catch {
-        // Do not invent missing market data.
+        // Never invent missing event data.
       }
     }
 
     // ---------------------------------------------------------
-    // FLATTEN SPORTYBET MARKETS
+    // FLATTEN MARKETS
     // ---------------------------------------------------------
 
-    function flattenMarkets(result) {
+    function flattenMarkets(
+      result
+    ) {
       const output = [];
 
       if (
         !result ||
-        !Array.isArray(result.markets)
+        !Array.isArray(
+          result.markets
+        )
       ) {
         return output;
       }
 
-      for (const market of result.markets) {
+      for (
+        const market of result.markets
+      ) {
         if (
           !market ||
-          !Array.isArray(market.outcomes)
+          !Array.isArray(
+            market.outcomes
+          )
         ) {
           continue;
         }
 
-        const marketId = String(
-          market.marketId || ""
-        );
+        const marketId =
+          String(
+            market.marketId ||
+            ""
+          );
 
         if (!marketId) {
           continue;
         }
 
         const specifier =
-          market.specifier === null ||
-          market.specifier === undefined
+          market.specifier ===
+            null ||
+          market.specifier ===
+            undefined
             ? ""
-            : String(market.specifier);
+            : String(
+                market.specifier
+              );
 
         if (
-          market.status !== null &&
-          market.status !== undefined &&
-          String(market.status) === "2"
+          market.status !==
+            null &&
+          market.status !==
+            undefined &&
+          String(
+            market.status
+          ) === "2"
         ) {
           continue;
         }
 
-        for (const outcome of market.outcomes) {
+        for (
+          const outcome of
+          market.outcomes
+        ) {
           if (!outcome) {
             continue;
           }
 
-          if (outcome.isActive === false) {
+          if (
+            outcome.isActive ===
+            false
+          ) {
             continue;
           }
 
-          const outcomeId = String(
-            outcome.outcomeId || ""
-          );
+          const outcomeId =
+            String(
+              outcome.outcomeId ||
+              ""
+            );
 
           if (!outcomeId) {
             continue;
           }
 
-          const odds = Number(outcome.odds);
+          const odds =
+            Number(
+              outcome.odds
+            );
 
           if (
-            !Number.isFinite(odds) ||
+            !Number.isFinite(
+              odds
+            ) ||
             odds <= 0
           ) {
             continue;
@@ -271,34 +370,51 @@ export default async function handler(req, res) {
 
           output.push({
             eventId:
-              String(result.event?.eventId || ""),
+              String(
+                result.event
+                  ?.eventId ||
+                  ""
+              ),
 
             gameId:
-              String(result.event?.gameId || ""),
+              String(
+                result.event
+                  ?.gameId ||
+                  ""
+              ),
 
             event:
               `${result.event?.homeTeamName || ""} vs ` +
               `${result.event?.awayTeamName || ""}`.trim(),
 
             homeTeamName:
-              result.event?.homeTeamName || "",
+              result.event
+                ?.homeTeamName ||
+              "",
 
             awayTeamName:
-              result.event?.awayTeamName || "",
+              result.event
+                ?.awayTeamName ||
+              "",
 
             startTime:
-              result.event?.startTime || null,
+              result.event
+                ?.startTime ||
+              null,
 
             marketId,
+
             market:
-              market.market || "",
+              market.market ||
+              "",
 
             specifier,
 
             outcomeId,
 
             pick:
-              outcome.pick || "",
+              outcome.pick ||
+              "",
 
             odds
           });
@@ -308,16 +424,25 @@ export default async function handler(req, res) {
       return output;
     }
 
-    const optionsByEvent = new Map();
+    const optionsByEvent =
+      new Map();
 
-    for (const event of uniqueEvents) {
+    for (
+      const event of uniqueEvents
+    ) {
       const result =
-        marketMap.get(event.eventId);
+        marketMap.get(
+          event.eventId
+        );
 
       const options =
-        flattenMarkets(result);
+        flattenMarkets(
+          result
+        );
 
-      if (options.length) {
+      if (
+        options.length
+      ) {
         optionsByEvent.set(
           event.eventId,
           options
@@ -326,10 +451,13 @@ export default async function handler(req, res) {
     }
 
     // ---------------------------------------------------------
-    // VERIFY ORIGINAL SELECTIONS
+    // MATCH SELECTION HELPER
     // ---------------------------------------------------------
 
-    function sameSelection(a, b) {
+    function sameSelection(
+      a,
+      b
+    ) {
       return (
         String(a.eventId) ===
           String(b.eventId) &&
@@ -337,33 +465,46 @@ export default async function handler(req, res) {
         String(a.marketId) ===
           String(b.marketId) &&
 
-        String(a.specifier || "") ===
-          String(b.specifier || "") &&
+        String(
+          a.specifier || ""
+        ) ===
+          String(
+            b.specifier || ""
+          ) &&
 
         String(a.outcomeId) ===
           String(b.outcomeId)
       );
     }
 
-    const verifiedOriginals =
-      originals.filter((original) => {
-        const options =
-          optionsByEvent.get(
-            original.eventId
-          ) || [];
+    // ---------------------------------------------------------
+    // VERIFY ORIGINALS
+    // ---------------------------------------------------------
 
-        return options.some(
-          (option) =>
-            sameSelection(
-              original,
-              option
-            )
-        );
-      });
+    const verifiedOriginals =
+      originals.filter(
+        (original) => {
+          const options =
+            optionsByEvent.get(
+              original.eventId
+            ) || [];
+
+          return options.some(
+            (option) =>
+              sameSelection(
+                original,
+                option
+              )
+          );
+        }
+      );
 
     const uniqueVerified = [];
 
-    for (const selection of verifiedOriginals) {
+    for (
+      const selection of
+      verifiedOriginals
+    ) {
       if (
         !uniqueVerified.some(
           (existing) =>
@@ -371,7 +512,9 @@ export default async function handler(req, res) {
             selection.eventId
         )
       ) {
-        uniqueVerified.push(selection);
+        uniqueVerified.push(
+          selection
+        );
       }
     }
 
@@ -380,25 +523,31 @@ export default async function handler(req, res) {
     // ---------------------------------------------------------
 
     const sortedByOdds =
-      [...uniqueVerified].sort(
+      [
+        ...uniqueVerified
+      ].sort(
         (a, b) =>
           Number(a.odds || 999) -
           Number(b.odds || 999)
       );
 
-    const safeCount = Math.max(
-      1,
-      Math.ceil(
-        sortedByOdds.length * 0.5
-      )
-    );
+    const safeCount =
+      Math.max(
+        1,
+        Math.ceil(
+          sortedByOdds.length *
+            0.5
+        )
+      );
 
-    const balancedCount = Math.max(
-      1,
-      Math.ceil(
-        sortedByOdds.length * 0.75
-      )
-    );
+    const balancedCount =
+      Math.max(
+        1,
+        Math.ceil(
+          sortedByOdds.length *
+            0.75
+        )
+      );
 
     const safeSelections =
       sortedByOdds.slice(
@@ -416,18 +565,22 @@ export default async function handler(req, res) {
       [...uniqueVerified];
 
     // ---------------------------------------------------------
-    // BUILD AI CANDIDATES
+    // PREPARE AI CANDIDATES
     // ---------------------------------------------------------
 
     const aiCandidates = [];
 
-    for (const event of uniqueEvents) {
+    for (
+      const event of uniqueEvents
+    ) {
       const options =
         optionsByEvent.get(
           event.eventId
         ) || [];
 
-      if (!options.length) {
+      if (
+        !options.length
+      ) {
         continue;
       }
 
@@ -451,26 +604,37 @@ export default async function handler(req, res) {
             )
         );
 
-      if (!candidates.length) {
-        candidates = options;
+      if (
+        !candidates.length
+      ) {
+        candidates =
+          options;
       }
 
       candidates =
         candidates
           .filter(
             (option) =>
-              option.odds >= 1.01 &&
-              option.odds <= 8
+              option.odds >=
+                1.01 &&
+              option.odds <=
+                8
           )
           .sort(
             (a, b) =>
               a.odds - b.odds
           )
-          .slice(0, 50);
+          .slice(
+            0,
+            50
+          );
 
       aiCandidates.push({
-        eventId: event.eventId,
-        event: event.event,
+        eventId:
+          event.eventId,
+
+        event:
+          event.event,
 
         original:
           originals.find(
@@ -479,12 +643,13 @@ export default async function handler(req, res) {
               event.eventId
           ) || null,
 
-        options: candidates
+        options:
+          candidates
       });
     }
 
     // ---------------------------------------------------------
-    // GEMINI
+    // GEMINI 3.6 FLASH
     // ---------------------------------------------------------
 
     let aiReturned = [];
@@ -492,11 +657,13 @@ export default async function handler(req, res) {
     let geminiStatus =
       GEMINI_KEY
         ? "API key detected"
-        : "GEMINI_API_KEY / GOOGLE_API_KEY missing";
+        : "Gemini API key missing";
 
-    let geminiError = null;
+    let geminiError =
+      null;
 
-    let geminiRawResponse = null;
+    let geminiRawResponse =
+      null;
 
     if (
       GEMINI_KEY &&
@@ -507,11 +674,13 @@ You are analyzing a football betting selection list.
 
 There are exactly ${aiCandidates.length} football games.
 
-IMPORTANT:
+YOUR MOST IMPORTANT RULE:
 
 Return EXACTLY ONE recommendation for EVERY game.
 
-Each recommendation MUST belong to a different event.
+If there are 8 games, return 8 recommendations.
+
+Each recommendation must belong to a different event.
 
 Never combine games.
 
@@ -530,25 +699,25 @@ marketId
 specifier
 outcomeId
 
-must exist in the supplied data.
+must exist in the supplied SportyBet data.
 
-You MAY change the user's original selection to another available SportyBet market.
+You may replace the user's original selection with another market IF that market is present in the supplied options.
 
-Prefer simple mainstream markets.
+Prefer simple, understandable mainstream markets.
 
 Avoid Correct Score unless there is no reasonable alternative.
 
 Avoid extremely high odds.
 
-This is not a guarantee of winning.
+Do not claim that any selection is guaranteed to win.
 
 Do not use certainty language.
 
 REASON STYLE:
 
-Write one short natural sentence.
+Write one short sentence.
 
-Sound like a knowledgeable football fan explaining the choice.
+Sound natural and conversational, like a knowledgeable football fan explaining the choice.
 
 Do NOT use robotic phrases such as:
 
@@ -577,45 +746,49 @@ Required format:
 
 SPORTYBET OPTIONS:
 
-${JSON.stringify(aiCandidates)}
+${JSON.stringify(
+  aiCandidates
+)}
 `;
 
       try {
         const geminiURL =
           "https://generativelanguage.googleapis.com/v1beta/models/" +
-          "gemini-2.5-flash:generateContent?key=" +
-          encodeURIComponent(
-            GEMINI_KEY
-          );
+          "gemini-3.6-flash:generateContent";
 
         const geminiResponse =
           await fetchJSON(
             geminiURL,
             {
-              method: "POST",
+              method:
+                "POST",
 
               headers: {
                 "Content-Type":
-                  "application/json"
+                  "application/json",
+
+                "x-goog-api-key":
+                  GEMINI_KEY
               },
 
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text: prompt
-                      }
-                    ]
-                  }
-                ],
+              body:
+                JSON.stringify({
+                  contents: [
+                    {
+                      parts: [
+                        {
+                          text:
+                            prompt
+                        }
+                      ]
+                    }
+                  ],
 
-                generationConfig: {
-                  temperature: 0.2,
-                  responseMimeType:
-                    "application/json"
-                }
-              })
+                  generationConfig: {
+                    responseMimeType:
+                      "application/json"
+                  }
+                })
             }
           );
 
@@ -625,9 +798,18 @@ ${JSON.stringify(aiCandidates)}
         geminiRawResponse =
           geminiResponse.data;
 
-        if (!geminiResponse.ok) {
+        // -----------------------------------------------------
+        // GEMINI ERROR
+        // -----------------------------------------------------
+
+        if (
+          !geminiResponse.ok
+        ) {
           geminiError =
-            geminiResponse.data?.error?.message ||
+            geminiResponse
+              .data
+              ?.error
+              ?.message ||
             geminiResponse.rawText ||
             "Gemini request failed.";
         } else {
@@ -635,8 +817,7 @@ ${JSON.stringify(aiCandidates)}
             geminiResponse
               .data
               ?.candidates?.[0]
-              ?.content
-              ?.parts?.[0]
+              ?.content?.parts?.[0]
               ?.text ||
             "";
 
@@ -644,16 +825,28 @@ ${JSON.stringify(aiCandidates)}
             geminiError =
               "Gemini returned an empty response.";
           } else {
-            // Remove accidental markdown fences.
-            text = text
-              .replace(/^```json\s*/i, "")
-              .replace(/^```\s*/i, "")
-              .replace(/\s*```$/i, "")
-              .trim();
+            // Remove accidental Markdown JSON fences.
+            text =
+              text
+                .replace(
+                  /^```json\s*/i,
+                  ""
+                )
+                .replace(
+                  /^```\s*/i,
+                  ""
+                )
+                .replace(
+                  /\s*```$/i,
+                  ""
+                )
+                .trim();
 
             try {
               const parsed =
-                JSON.parse(text);
+                JSON.parse(
+                  text
+                );
 
               if (
                 Array.isArray(
@@ -669,23 +862,29 @@ ${JSON.stringify(aiCandidates)}
                 geminiError =
                   "Gemini responded, but no recommendations array was returned.";
               }
-            } catch (parseError) {
+            } catch (
+              parseError
+            ) {
               geminiError =
                 "Gemini returned invalid JSON.";
 
               geminiRawResponse = {
                 response:
                   geminiResponse.data,
+
                 parseError:
                   String(
-                    parseError?.message ||
+                    parseError
+                      ?.message ||
                     parseError
                   )
               };
             }
           }
         }
-      } catch (error) {
+      } catch (
+        error
+      ) {
         geminiStatus =
           "Gemini request exception";
 
@@ -695,26 +894,33 @@ ${JSON.stringify(aiCandidates)}
             error
           );
       }
-    } else if (!GEMINI_KEY) {
+    } else if (
+      !GEMINI_KEY
+    ) {
       geminiError =
         "No Gemini API key was found in Vercel environment variables.";
     }
 
     // ---------------------------------------------------------
-    // VALIDATE GEMINI PICKS AGAINST SPORTYBET
+    // VALIDATE EVERY AI RECOMMENDATION
     // ---------------------------------------------------------
 
     const aiValidated = [];
 
-    for (const recommendation of aiReturned) {
-      if (!recommendation) {
+    for (
+      const recommendation of
+      aiReturned
+    ) {
+      if (
+        !recommendation
+      ) {
         continue;
       }
 
       const eventId =
         String(
           recommendation.eventId ||
-          ""
+            ""
         );
 
       const options =
@@ -725,31 +931,39 @@ ${JSON.stringify(aiCandidates)}
       const exact =
         options.find(
           (option) =>
-            String(option.marketId) ===
+            String(
+              option.marketId
+            ) ===
               String(
                 recommendation.marketId ||
-                ""
+                  ""
               ) &&
 
             String(
-              option.specifier || ""
+              option.specifier ||
+                ""
             ) ===
               String(
                 recommendation.specifier ||
-                ""
+                  ""
               ) &&
 
-            String(option.outcomeId) ===
+            String(
+              option.outcomeId
+            ) ===
               String(
                 recommendation.outcomeId ||
-                ""
+                  ""
               )
         );
 
+      // Reject anything that does not exist
+      // exactly on SportyBet.
       if (!exact) {
         continue;
       }
 
+      // Only one recommendation per game.
       if (
         aiValidated.some(
           (existing) =>
@@ -773,21 +987,28 @@ ${JSON.stringify(aiCandidates)}
     }
 
     // ---------------------------------------------------------
-    // ENSURE ONE AI SELECTION PER GAME
+    // GUARANTEE ONE VERIFIED OPTION PER GAME
     // ---------------------------------------------------------
 
-    const aiFinalSelections = [];
+    const aiFinalSelections =
+      [];
 
-    for (const event of uniqueEvents) {
+    for (
+      const event of uniqueEvents
+    ) {
       const options =
         optionsByEvent.get(
           event.eventId
         ) || [];
 
-      if (!options.length) {
+      if (
+        !options.length
+      ) {
         continue;
       }
 
+      // First choice:
+      // verified Gemini recommendation.
       const aiPick =
         aiValidated.find(
           (selection) =>
@@ -804,7 +1025,7 @@ ${JSON.stringify(aiCandidates)}
       }
 
       // -------------------------------------------------------
-      // SAFE REAL-DATA FALLBACK
+      // REAL-DATA FALLBACK
       // -------------------------------------------------------
 
       const original =
@@ -816,21 +1037,24 @@ ${JSON.stringify(aiCandidates)}
 
       const preferred =
         options
-          .filter((option) =>
-            [
-              "Double Chance",
-              "Over/Under",
-              "GG/NG",
-              "Draw No Bet",
-              "1X2"
-            ].includes(
-              option.market
-            )
+          .filter(
+            (option) =>
+              [
+                "Double Chance",
+                "Over/Under",
+                "GG/NG",
+                "Draw No Bet",
+                "1X2"
+              ].includes(
+                option.market
+              )
           )
           .filter(
             (option) =>
-              option.odds >= 1.05 &&
-              option.odds <= 2.5
+              option.odds >=
+                1.05 &&
+              option.odds <=
+                2.5
           )
           .sort(
             (a, b) =>
@@ -840,6 +1064,8 @@ ${JSON.stringify(aiCandidates)}
       let fallback =
         preferred[0];
 
+      // Prefer a different real market
+      // when one exists.
       if (original) {
         const different =
           preferred.find(
@@ -856,12 +1082,16 @@ ${JSON.stringify(aiCandidates)}
         }
       }
 
-      if (!fallback) {
+      // Last real-data fallback.
+      if (
+        !fallback
+      ) {
         fallback =
           [...options]
             .filter(
               (option) =>
-                option.odds >= 1.01
+                option.odds >=
+                1.01
             )
             .sort(
               (a, b) =>
@@ -869,7 +1099,9 @@ ${JSON.stringify(aiCandidates)}
             )[0];
       }
 
-      if (!fallback) {
+      if (
+        !fallback
+      ) {
         continue;
       }
 
@@ -938,7 +1170,8 @@ ${JSON.stringify(aiCandidates)}
 
       batchEventsReturned:
         batchResults.filter(
-          (r) => r?.success
+          (r) =>
+            r?.success
         ).length,
 
       individualMarketRequests,
@@ -967,7 +1200,9 @@ ${JSON.stringify(aiCandidates)}
       geminiError,
 
       geminiApiKeyDetected:
-        Boolean(GEMINI_KEY),
+        Boolean(
+          GEMINI_KEY
+        ),
 
       requestedEventIds:
         uniqueEvents.map(
@@ -995,30 +1230,43 @@ ${JSON.stringify(aiCandidates)}
           )
     };
 
-    // Only expose a small diagnostic summary,
-    // not the full Gemini response.
-    if (geminiRawResponse) {
+    // Keep diagnostic preview short.
+    if (
+      geminiRawResponse
+    ) {
       diagnostics.geminiResponsePreview =
         JSON.stringify(
           geminiRawResponse
-        ).slice(0, 1500);
+        ).slice(
+          0,
+          1500
+        );
     }
 
-    return res.status(200).json({
+    return res.status(
+      200
+    ).json({
       success: true,
       profiles,
       diagnostics
     });
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
     console.error(
       "OPTIMIZE ERROR:",
       error
     );
 
-    return res.status(500).json({
+    return res.status(
+      500
+    ).json({
       success: false,
-      error: "Optimizer failed.",
+
+      error:
+        "Optimizer failed.",
+
       details:
         String(
           error?.message ||
