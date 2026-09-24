@@ -783,11 +783,7 @@
         name => optimizationResults?.[name]
       );
 
-      if (!hasProfiles) {
-
-        throw new Error(
-          "The optimizer responded, but no profiles were returned."
-        );
+      
       }
 
       renderProfiles();
@@ -799,7 +795,36 @@
         "Optimization complete.",
         "success"
       );
+if (!hasProfiles) {
 
+  profilesContainer.innerHTML = `
+    <div class="selection">
+      <div class="event">
+        Optimizer Diagnostic
+      </div>
+
+      <div class="market">
+        ${escapeHtml(
+          JSON.stringify(
+            data,
+            null,
+            2
+          )
+        )}
+      </div>
+    </div>
+  `;
+
+  resultsCard.classList.remove("hidden");
+
+  showStatus(
+    optimizeStatus,
+    "Diagnostic response received. Check the result below.",
+    "success"
+  );
+
+  return;
+}
     } catch (error) {
 
       console.error(error);
