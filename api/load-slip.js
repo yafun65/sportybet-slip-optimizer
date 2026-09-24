@@ -1,100 +1,223 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+
+  /*
+   * TEMPORARY DIAGNOSTIC VERSION
+   *
+   * Supports:
+   *
+   * GET:
+   * /api/load-slip?code=JQVHY8
+   *
+   * POST:
+   * { "code": "JQVHY8" }
+   */
+
+
+  let code = "";
+
+
+  /* -----------------------------------------
+     GET REQUEST
+  ----------------------------------------- */
+
+  if (req.method === "GET") {
+
+    code =
+      String(req.query?.code || "")
+        .trim()
+        .toUpperCase();
+
+  }
+
+
+  /* -----------------------------------------
+     POST REQUEST
+  ----------------------------------------- */
+
+  else if (req.method === "POST") {
+
+    code =
+      String(req.body?.code || "")
+        .trim()
+        .toUpperCase();
+
+  }
+
+
+  /* -----------------------------------------
+     OTHER METHODS
+  ----------------------------------------- */
+
+  else {
+
     return res.status(405).json({
+
       success: false,
+
       error: "Method not allowed"
+
     });
+
   }
 
-  const code = String(req.body?.code || "")
-    .trim()
-    .toUpperCase();
 
-  if (!/^[A-Z0-9]{4,20}$/.test(code)) {
+  /* -----------------------------------------
+     VALIDATE CODE
+  ----------------------------------------- */
+
+  if (
+    !/^[A-Z0-9]{4,20}$/.test(code)
+  ) {
+
     return res.status(400).json({
+
       success: false,
-      error: "Please enter a valid SportyBet booking code."
+
+      error:
+        "Please enter a valid SportyBet booking code."
+
     });
+
   }
+
+
+  /* -----------------------------------------
+     CALL RENDER API
+  ----------------------------------------- */
 
   try {
-    const response = await fetch(
-      `https://sportybet-api.onrender.com/booking/${encodeURIComponent(code)}`
-    );
 
-    const raw = await response.text();
+    const response =
+      await fetch(
+        `https://sportybet-api.onrender.com/booking/${encodeURIComponent(code)}`
+      );
+
+
+    const raw =
+      await response.text();
+
 
     let data;
 
-    try {
-      data = JSON.parse(raw);
-    } catch (error) {
-      console.error("Invalid JSON from SportyBet API:", raw);
 
-      return res.status(502).json({
-        success: false,
-        error: "The SportyBet API returned an invalid response."
-      });
+    try {
+
+      data =
+        JSON.parse(raw);
+
     }
 
-    if (!response.ok) {
-      return res.status(response.status).json({
+    catch (error) {
+
+      return res.status(502).json({
+
         success: false,
+
+        error:
+          "Render returned invalid JSON.",
+
+        rawResponse:
+          raw.substring(0, 1000)
+
+      });
+
+    }
+
+
+    /* -----------------------------------------
+       RENDER ERROR
+    ----------------------------------------- */
+
+    if (!response.ok) {
+
+      return res.status(response.status).json({
+
+        success: false,
+
         error:
           data?.error ||
           data?.message ||
-          "Unable to load the SportyBet booking."
+          "Render could not load the SportyBet booking.",
+
+        renderResponse:
+          data
+
       });
+
     }
 
-    /*
-     * The SportyBet API already returns the selections
-     * directly inside data.selections.
-     */
 
-    if (
-      !Array.isArray(data?.selections) ||
-      data.selections.length === 0
-    ) {
-      console.error(
-        "Booking loaded but no selections were returned:",
-        data
-      );
-
-      return res.status(422).json({
-        success: false,
-        error:
-          "The booking was found, but it contains no selections."
-      });
-    }
-
-    /*
-     * Pass the selections directly to the frontend.
-     * No additional parsing is necessary.
-     */
+    /* -----------------------------------------
+       RETURN EXACT DATA
+    ----------------------------------------- */
 
     return res.status(200).json({
+
       success: true,
 
+      message:
+        "Vercel successfully received the SportyBet booking from Render.",
+
       shareCode:
-        data.shareCode || code,
+        data?.shareCode ||
+        code,
 
       shareURL:
-        data.shareURL || null,
+        data?.shareURL ||
+        null,
 
       deadline:
-        data.deadline || null,
+        data?.deadline ||
+        null,
+
+      selectionCount:
+        Array.isArray(data?.selections)
+          ? data.selections.length
+          : 0,
 
       selections:
-        data.selections
+        Array.isArray(data?.selections)
+          ? data.selections
+          : [],
+
+      diagnostic: {
+
+        receivedCode:
+          code,
+
+        renderReturnedSelections:
+          Array.isArray(data?.selections),
+
+        renderSelectionCount:
+          Array.isArray(data?.selections)
+            ? data.selections.length
+            : 0
+
+      }
+
     });
+
 
   } catch (error) {
-    console.error("Load slip error:", error);
+
+    console.error(
+      "Load slip error:",
+      error
+    );
+
 
     return res.status(500).json({
+
       success: false,
-      error: "Unable to connect to the SportyBet API."
+
+      error:
+        "Unable to connect to the SportyBet API.",
+
+      details:
+        error.message
+
     });
+
   }
+
 }
