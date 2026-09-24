@@ -26,133 +26,405 @@ export default async function handler(req, res) {
     });
   }
 
+  // =====================================================
+  // FETCH REAL SPORTYBET MARKETS
+  // =====================================================
+
+  const eventIds = [
+    ...new Set(
+      selections
+        .map(selection => String(selection?.eventId || "").trim())
+        .filter(Boolean)
+    )
+  ];
+
+  const marketResults = [];
+
+  for (const eventId of eventIds) {
+
+    try {
+
+      const response = await fetch(
+        `https://sportybet-api.onrender.com/event-markets/${encodeURIComponent(eventId)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+
+        marketResults.push({
+          eventId,
+          success: false,
+          error:
+            data?.error ||
+            "Unable to retrieve markets."
+        });
+
+        continue;
+      }
+
+      marketResults.push({
+        eventId,
+        success: true,
+        data
+      });
+
+    } catch (error) {
+
+      console.error(
+        `Market lookup failed for ${eventId}:`,
+        error
+      );
+
+      marketResults.push({
+        eventId,
+        success: false,
+        error:
+          "Unable to connect to the SportyBet market service."
+      });
+
+    }
+
+  }
+
+
+  // =====================================================
+  // PREPARE VERIFIED MARKET DATA FOR GEMINI
+  // =====================================================
+
+  const verifiedEvents = [];
+
+  for (const result of marketResults) {
+
+    if (!result.success) {
+      continue;
+    }
+
+    const eventData = result.data;
+
+    const markets = [];
+
+    for (
+      const market
+      of Array.isArray(eventData.markets)
+        ? eventData.markets
+        : []
+    ) {
+
+      const outcomes = [];
+
+      for (
+        const outcome
+        of Array.isArray(market.outcomes)
+          ? market.outcomes
+          : []
+      ) {
+
+        if (outcome.isActive === false) {
+          continue;
+        }
+
+        outcomes.push({
+
+          outcomeId:
+            outcome.outcomeId,
+
+          pick:
+            outcome.pick,
+
+          odds:
+            outcome.odds
+
+        });
+
+      }
+
+      if (outcomes.length === 0) {
+        continue;
+      }
+
+      markets.push({
+
+        marketId:
+          market.marketId,
+
+        market:
+          market.market,
+
+        specifier:
+          market.specifier,
+
+        outcomes
+
+      });
+
+    }
+
+    verifiedEvents.push({
+
+      eventId:
+        eventData.event?.eventId ||
+        result.eventId,
+
+      gameId:
+        eventData.event?.gameId ||
+        null,
+
+      event:
+        `${eventData.event?.homeTeamName || ""} vs ${eventData.event?.awayTeamName || ""}`,
+
+      homeTeamName:
+        eventData.event?.homeTeamName ||
+        null,
+
+      awayTeamName:
+        eventData.event?.awayTeamName ||
+        null,
+
+      startTime:
+        eventData.event?.startTime ||
+        null,
+
+      markets
+
+    });
+
+  }
+
+
+  // =====================================================
+  // GEMINI PROMPT
+  // =====================================================
+
   const prompt = `
-You are a neutral sports betting-slip optimizer.
+You are a neutral sports betting selection optimizer.
 
-Analyze ONLY the supplied SportyBet selections.
+You have TWO types of data:
 
-Create exactly three profiles:
+1. ORIGINAL SELECTIONS
+These are the selections already contained in the user's SportyBet booking.
+
+2. VERIFIED SPORTYBET MARKETS
+These are markets and outcomes retrieved directly from SportyBet for the same events.
+
+Create exactly FOUR profiles:
 
 SAFE
 BALANCED
 RISKY
+AI RECOMMENDED
 
-SAFE:
-Reduce overall variance by selecting fewer or less volatile selections from the supplied slip.
 
-BALANCED:
-Keep a moderate number of selections and moderate variance.
+=====================================================
+SAFE
+=====================================================
 
-RISKY:
-Keep more selections and allow higher overall variance.
+Reduce overall variance by selecting fewer and/or relatively lower-variance selections from the ORIGINAL SELECTIONS.
 
-IMPORTANT:
+You may remove selections.
+
+You may reorder selections.
+
+You may NOT create new selections.
+
+
+=====================================================
+BALANCED
+=====================================================
+
+Create a moderate profile using the ORIGINAL SELECTIONS.
+
+You may remove selections.
+
+You may reorder selections.
+
+You may NOT create new selections.
+
+
+=====================================================
+RISKY
+=====================================================
+
+Keep more of the ORIGINAL SELECTIONS and allow higher overall variance.
+
+You may remove selections.
+
+You may reorder selections.
+
+You may NOT create new selections.
+
+
+=====================================================
+AI RECOMMENDED
+=====================================================
+
+This profile is different.
+
+For each event, analyze the VERIFIED SPORTYBET MARKETS.
+
+You may recommend:
+
+A. The original selection, OR
+
+B. A different market/outcome that actually exists in the VERIFIED SPORTYBET MARKETS.
+
+Example:
+
+Original:
+Arsenal Win
+
+If the VERIFIED SPORTYBET MARKETS contain:
+
+Over 1.5
+marketId = 18
+specifier = total=1.5
+outcomeId = 12
+
+then you may recommend:
+
+Over 1.5
+
+But ONLY if that exact market and outcome are present in the VERIFIED SPORTYBET MARKETS.
+
+Do NOT invent markets.
+
+Do NOT invent outcomes.
+
+Do NOT invent market IDs.
+
+Do NOT invent outcome IDs.
+
+Do NOT invent specifiers.
+
+Every AI RECOMMENDED selection MUST be copied exactly from the VERIFIED SPORTYBET MARKETS.
+
+
+=====================================================
+IMPORTANT RULES
+=====================================================
 
 1. Never guarantee a win.
-2. Never say a selection is certain.
-3. Never invent a match.
-4. Never invent a market.
-5. Never invent a pick.
-6. Only use selections supplied by the user.
-7. You may remove selections from the original slip.
-8. You may reorder selections.
-9. You may choose which original selections belong in SAFE, BALANCED and RISKY.
-10. DO NOT create a new market.
-11. DO NOT create a new pick.
-12. DO NOT change the outcome.
-13. Every returned selection MUST come directly from the supplied selections.
-14. Every returned selection MUST preserve its original eventId.
-15. Every returned selection MUST preserve its original marketId.
-16. Every returned selection MUST preserve its original specifier.
-17. Every returned selection MUST preserve its original outcomeId.
-18. Every returned selection MUST preserve its original odds.
-19. Every returned selection MUST preserve its original event text.
-20. Every returned selection MUST preserve its original market text.
-21. Every returned selection MUST preserve its original pick text.
-22. The goal is to optimize the slip by selecting, reducing or reordering the supplied selections.
-23. Do not change any SportyBet selection identifiers.
-24. Do not create selections that are not present in the supplied data.
-25. Give a short explanation for why each selected original selection was included in that profile.
-26. The explanation must be neutral and must NOT claim that the selection will win.
-27. Keep each explanation to ONE short sentence.
-28. The explanation should describe the selection's relative variance, odds, market characteristics, or why it fits that profile.
-29. Do not use phrases such as "guaranteed", "sure win", "banker", "certain", "will win", or "100%".
-30. Return JSON only.
 
-For each profile provide:
+2. Never claim a selection is certain.
 
-- summary
-- selections
+3. Never use phrases such as:
+"guaranteed"
+"sure win"
+"banker"
+"certain"
+"100%"
+"will win"
 
-For every selection provide:
+4. Do not predict with certainty.
 
-- event
-- market
-- pick
-- odds
-- eventId
-- marketId
-- specifier
-- outcomeId
-- reason
+5. SAFE, BALANCED and RISKY may ONLY contain selections from ORIGINAL SELECTIONS.
 
-Use exactly this structure:
+6. AI RECOMMENDED may contain selections from VERIFIED SPORTYBET MARKETS.
+
+7. Every AI RECOMMENDED selection MUST have a matching:
+eventId
+marketId
+specifier
+outcomeId
+odds
+
+in the VERIFIED SPORTYBET MARKETS.
+
+8. Preserve the exact SportyBet identifiers.
+
+9. Do not alter odds.
+
+10. Do not create an event.
+
+11. Do not create a market.
+
+12. Do not create an outcome.
+
+13. If an event has no VERIFIED SPORTYBET MARKETS, do not invent a recommendation for that event.
+
+14. AI RECOMMENDED does not have to contain every event.
+
+15. Prefer a smaller number of selections when the available alternatives provide a clearer lower-variance profile.
+
+16. Give one short neutral reason for every selection.
+
+17. Keep each reason to ONE sentence.
+
+18. The reason should describe relative variance, market characteristics, odds, or why the selection fits the profile.
+
+19. Return JSON only.
+
+=====================================================
+OUTPUT FORMAT
+=====================================================
 
 {
   "SAFE": {
     "summary": "",
-    "selections": [
-      {
-        "event": "",
-        "market": "",
-        "pick": "",
-        "odds": "",
-        "eventId": "",
-        "marketId": "",
-        "specifier": "",
-        "outcomeId": "",
-        "reason": ""
-      }
-    ]
+    "selections": []
   },
+
   "BALANCED": {
     "summary": "",
-    "selections": [
-      {
-        "event": "",
-        "market": "",
-        "pick": "",
-        "odds": "",
-        "eventId": "",
-        "marketId": "",
-        "specifier": "",
-        "outcomeId": "",
-        "reason": ""
-      }
-    ]
+    "selections": []
   },
+
   "RISKY": {
     "summary": "",
-    "selections": [
-      {
-        "event": "",
-        "market": "",
-        "pick": "",
-        "odds": "",
-        "eventId": "",
-        "marketId": "",
-        "specifier": "",
-        "outcomeId": "",
-        "reason": ""
-      }
-    ]
+    "selections": []
+  },
+
+  "AI RECOMMENDED": {
+    "summary": "",
+    "selections": []
   }
 }
 
-SUPPLIED SELECTIONS:
+=====================================================
+SELECTION FORMAT
+=====================================================
+
+Every selection must contain:
+
+{
+  "event": "",
+  "market": "",
+  "pick": "",
+  "odds": "",
+  "eventId": "",
+  "marketId": "",
+  "specifier": "",
+  "outcomeId": "",
+  "reason": ""
+}
+
+=====================================================
+ORIGINAL SELECTIONS
+=====================================================
 
 ${JSON.stringify(selections)}
+
+=====================================================
+VERIFIED SPORTYBET MARKETS
+=====================================================
+
+${JSON.stringify(verifiedEvents)}
+
+=====================================================
+
+Remember:
+
+SAFE, BALANCED and RISKY = ORIGINAL SELECTIONS ONLY.
+
+AI RECOMMENDED = VERIFIED SPORTYBET MARKETS ONLY.
+
+Return JSON only.
 `;
+
+
+  // =====================================================
+  // CALL GEMINI
+  // =====================================================
 
   try {
 
@@ -162,13 +434,21 @@ ${JSON.stringify(selections)}
         apiKey
       );
 
-    const profiles = [
+
+    // =====================================================
+    // VALIDATE STANDARD PROFILES
+    // =====================================================
+
+    const originalProfiles = [
       "SAFE",
       "BALANCED",
       "RISKY"
     ];
 
-    for (const profile of profiles) {
+    for (
+      const profile
+      of originalProfiles
+    ) {
 
       if (
         !result?.[profile] ||
@@ -178,22 +458,16 @@ ${JSON.stringify(selections)}
 
         return res.status(502).json({
           error:
-            "AI returned an invalid optimization result."
+            `AI returned an invalid ${profile} profile.`
         });
 
       }
+
 
       for (
         const optimized
         of result[profile].selections
       ) {
-
-        /*
-         * Find the exact original selection.
-         *
-         * We validate using the SportyBet identifiers
-         * rather than relying on the text.
-         */
 
         const original =
           selections.find(
@@ -206,6 +480,7 @@ ${JSON.stringify(selections)}
                 String(optimized.outcomeId)
           );
 
+
         if (!original) {
 
           return res.status(502).json({
@@ -215,10 +490,6 @@ ${JSON.stringify(selections)}
 
         }
 
-        /*
-         * Make sure the AI did not change the
-         * SportyBet identifiers or odds.
-         */
 
         if (
           String(optimized.specifier || "") !==
@@ -232,6 +503,7 @@ ${JSON.stringify(selections)}
 
         }
 
+
         if (
           String(optimized.odds || "") !==
           String(original.odds || "")
@@ -244,9 +516,6 @@ ${JSON.stringify(selections)}
 
         }
 
-        /*
-         * Require a reason for every selection.
-         */
 
         if (
           typeof optimized.reason !== "string" ||
@@ -264,23 +533,196 @@ ${JSON.stringify(selections)}
 
     }
 
-    /*
-     * Return the validated AI result.
-     */
+
+    // =====================================================
+    // VALIDATE AI RECOMMENDED
+    // =====================================================
+
+    if (
+      !result?.["AI RECOMMENDED"] ||
+      typeof result["AI RECOMMENDED"].summary !== "string" ||
+      !Array.isArray(
+        result["AI RECOMMENDED"].selections
+      )
+    ) {
+
+      return res.status(502).json({
+        error:
+          "AI returned an invalid AI RECOMMENDED profile."
+      });
+
+    }
+
+
+    const recommendedSelections =
+      result["AI RECOMMENDED"].selections;
+
+
+    for (
+      const recommended
+      of recommendedSelections
+    ) {
+
+      if (
+        typeof recommended.reason !== "string" ||
+        recommended.reason.trim().length === 0
+      ) {
+
+        return res.status(502).json({
+          error:
+            "AI RECOMMENDED contains a selection without a reason."
+        });
+
+      }
+
+
+      const event =
+        verifiedEvents.find(
+          item =>
+            String(item.eventId) ===
+            String(recommended.eventId)
+        );
+
+
+      if (!event) {
+
+        return res.status(502).json({
+          error:
+            `AI RECOMMENDED used an event that was not verified by SportyBet: ${recommended.eventId}`
+        });
+
+      }
+
+
+      let verifiedSelection =
+        null;
+
+
+      for (
+        const market
+        of event.markets
+      ) {
+
+        if (
+          String(market.marketId) !==
+          String(recommended.marketId)
+        ) {
+          continue;
+        }
+
+
+        if (
+          String(market.specifier || "") !==
+          String(recommended.specifier || "")
+        ) {
+          continue;
+        }
+
+
+        const outcome =
+          market.outcomes.find(
+            item =>
+              String(item.outcomeId) ===
+              String(recommended.outcomeId)
+          );
+
+
+        if (outcome) {
+
+          verifiedSelection = {
+
+            event:
+              event.event,
+
+            market:
+              market.market,
+
+            pick:
+              outcome.pick,
+
+            odds:
+              outcome.odds,
+
+            eventId:
+              event.eventId,
+
+            marketId:
+              market.marketId,
+
+            specifier:
+              market.specifier,
+
+            outcomeId:
+              outcome.outcomeId
+
+          };
+
+          break;
+
+        }
+
+      }
+
+
+      if (!verifiedSelection) {
+
+        return res.status(502).json({
+          error:
+            `AI RECOMMENDED invented or changed a SportyBet selection for ${recommended.event || recommended.eventId}.`
+        });
+
+      }
+
+
+      // Force the verified SportyBet data into
+      // the final response.
+
+      recommended.event =
+        verifiedSelection.event;
+
+      recommended.market =
+        verifiedSelection.market;
+
+      recommended.pick =
+        verifiedSelection.pick;
+
+      recommended.odds =
+        verifiedSelection.odds;
+
+      recommended.eventId =
+        verifiedSelection.eventId;
+
+      recommended.marketId =
+        verifiedSelection.marketId;
+
+      recommended.specifier =
+        verifiedSelection.specifier;
+
+      recommended.outcomeId =
+        verifiedSelection.outcomeId;
+
+    }
+
+
+    // =====================================================
+    // RETURN FINAL RESULT
+    // =====================================================
 
     return res.status(200).json(result);
 
   } catch (error) {
 
     console.error(
-      "Gemini error:",
+      "Gemini optimization error:",
       error
     );
 
     return res.status(500).json({
+
       error:
         error.message ||
         "AI optimization failed."
+
     });
 
   }
@@ -305,11 +747,16 @@ async function callGeminiWithFallback(
 
   let lastError = null;
 
-  for (const model of models) {
+
+  for (
+    const model
+    of models
+  ) {
 
     console.log(
       `Trying Gemini model: ${model}`
     );
+
 
     try {
 
@@ -328,9 +775,6 @@ async function callGeminiWithFallback(
         error.message
       );
 
-      /*
-       * Small delay before trying the next model.
-       */
 
       await new Promise(
         resolve =>
@@ -344,10 +788,13 @@ async function callGeminiWithFallback(
 
   }
 
-  throw lastError ||
+
+  throw (
+    lastError ||
     new Error(
       "All Gemini models failed."
-    );
+    )
+  );
 
 }
 
@@ -364,6 +811,7 @@ async function callGemini(
 
   const endpoint =
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
 
   const response =
     await fetch(
@@ -405,8 +853,10 @@ async function callGemini(
       }
     );
 
+
   const raw =
     await response.text();
+
 
   if (!response.ok) {
 
@@ -416,7 +866,9 @@ async function callGemini(
 
   }
 
+
   let data;
+
 
   try {
 
@@ -431,11 +883,13 @@ async function callGemini(
 
   }
 
+
   const text =
     data?.candidates?.[0]
       ?.content
       ?.parts?.[0]
       ?.text;
+
 
   if (!text) {
 
@@ -444,6 +898,7 @@ async function callGemini(
     );
 
   }
+
 
   try {
 
