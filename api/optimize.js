@@ -106,15 +106,41 @@ export default async function handler(req, res) {
   }
 
   async function callGemini(prompt) {
-    const models = [
-      "gemini-3.6-flash",
-      "gemini-3.5-flash",
-      "gemini-3.5-flash-lite"
-    ];
+  /*
+    Gemini model fallback strategy.
 
-    let lastError = null;
+    We retry temporary 503/429 errors before moving
+    to another model. This is important because a 503
+    usually means temporary service overload.
+  */
 
-    for (const model of models) {
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite"
+  ];
+
+  const retryDelays = [
+    1000,
+    2500,
+    5000
+  ];
+
+  let lastError = null;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+
+      // Wait before retrying.
+      if (attempt > 0) {
+        await new Promise((resolve) =>
+          setTimeout(
+            resolve,
+            retryDelays[attempt - 1]
+          )
+        );
+      }
+
       try {
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -134,13 +160,115 @@ export default async function handler(req, res) {
                 }
               ],
               generationConfig: {
-                temperature: 0.2,
                 responseMimeType: "application/json"
               }
             })
           }
         );
 
+        const rawText = await response.text();
+
+        // ----------------------------------------------------
+        // SUCCESS
+        // ----------------------------------------------------
+
+        if (response.ok) {
+          let data;
+
+          try {
+            data = JSON.parse(rawText);
+          } catch (_) {
+            lastError = new Error(
+              `Gemini ${model} returned invalid API JSON.`
+            );
+            continue;
+          }
+
+          const text =
+            data?.candidates?.[0]?.content?.parts
+              ?.map((part) => part?.text || "")
+              .join("") || "";
+
+          if (!text) {
+            lastError = new Error(
+              `Gemini ${model} returned an empty response.`
+            );
+            continue;
+          }
+
+          const parsed = extractJson(text);
+
+          if (!parsed) {
+            lastError = new Error(
+              `Gemini ${model} returned JSON that could not be parsed.`
+            );
+            continue;
+          }
+
+          return parsed;
+        }
+
+        // ----------------------------------------------------
+        // TEMPORARY ERRORS
+        // ----------------------------------------------------
+
+        if (
+          response.status === 503 ||
+          response.status === 429 ||
+          response.status === 500 ||
+          response.status === 502 ||
+          response.status === 504
+        ) {
+          lastError = new Error(
+            `Gemini ${model} returned HTTP ${response.status}: ${rawText.slice(
+              0,
+              500
+            )}`
+          );
+
+          console.warn(
+            `Gemini ${model} temporary error ${response.status}. ` +
+            `Retry ${attempt + 1}/${retryDelays.length}`
+          );
+
+          // Try this SAME model again.
+          continue;
+        }
+
+        // ----------------------------------------------------
+        // NON-RETRYABLE ERROR
+        // ----------------------------------------------------
+
+        lastError = new Error(
+          `Gemini ${model} returned HTTP ${response.status}: ${rawText.slice(
+            0,
+            500
+          )}`
+        );
+
+        // Don't waste time retrying a permanent error.
+        break;
+
+      } catch (error) {
+        lastError = error;
+
+        /*
+          Network errors can also be temporary, so retry
+          the same model.
+        */
+
+        console.warn(
+          `Gemini ${model} request failed:`,
+          error?.message || error
+        );
+      }
+    }
+  }
+
+  throw lastError || new Error(
+    "All Gemini models failed."
+  );
+  }
         const rawText = await response.text();
 
         if (!response.ok) {
