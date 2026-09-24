@@ -22,44 +22,40 @@ export default async function handler(req, res) {
 
     const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
-    const clean = (v) => String(v ?? "").trim();
+    const clean = (value) =>
+      String(value ?? "").trim();
 
     /*
-    ---------------------------------------------------------
+    =========================================================
     1. UNIQUE EVENTS
-    ---------------------------------------------------------
+    =========================================================
     */
 
     const uniqueSelections = [];
-    const seen = new Set();
+    const seenEvents = new Set();
 
     for (const selection of selections) {
       const eventId = clean(selection.eventId);
 
-      if (!eventId || seen.has(eventId)) continue;
+      if (!eventId) continue;
 
-      seen.add(eventId);
+      if (seenEvents.has(eventId)) continue;
+
+      seenEvents.add(eventId);
       uniqueSelections.push(selection);
     }
 
-    if (!uniqueSelections.length) {
-      return res.status(400).json({
-        success: false,
-        error: "No valid event IDs found"
-      });
-    }
-
     const eventIds = uniqueSelections.map(
-      (s) => clean(s.eventId)
+      (selection) => clean(selection.eventId)
     );
 
     /*
-    ---------------------------------------------------------
-    2. GET SPORTYBET MARKETS
-    ---------------------------------------------------------
+    =========================================================
+    2. GET BATCH SPORTYBET MARKETS
+    =========================================================
     */
 
-    let marketResponse;
+    let batchData;
 
     try {
       const response = await fetch(
@@ -71,38 +67,39 @@ export default async function handler(req, res) {
       if (!response.ok) {
         return res.status(502).json({
           success: false,
-          error: `SportyBet market service returned ${response.status}`
+          error:
+            "SportyBet market service failed",
+          status: response.status
         });
       }
 
-      marketResponse = await response.json();
+      batchData = await response.json();
     } catch (error) {
       return res.status(502).json({
         success: false,
-        error: "Could not load SportyBet markets",
+        error:
+          "Could not connect to SportyBet market service",
         details: error.message
       });
     }
 
-    if (
-      !marketResponse ||
-      !Array.isArray(marketResponse.results)
-    ) {
+    if (!Array.isArray(batchData?.results)) {
       return res.status(502).json({
         success: false,
-        error: "SportyBet market response was invalid"
+        error:
+          "Invalid SportyBet market response"
       });
     }
 
     /*
-    ---------------------------------------------------------
-    3. CREATE EVENT LOOKUP
-    ---------------------------------------------------------
+    =========================================================
+    3. STORE BATCH RESULTS
+    =========================================================
     */
 
     const eventMap = new Map();
 
-    for (const result of marketResponse.results) {
+    for (const result of batchData.results) {
       if (!result) continue;
 
       const eventId = clean(
@@ -112,44 +109,136 @@ export default async function handler(req, res) {
 
       if (!eventId) continue;
 
-      const event = result.event || {
-        eventId,
-        gameId: result.gameId,
-        homeTeamName: result.homeTeamName,
-        awayTeamName: result.awayTeamName,
-        startTime: result.startTime
-      };
+      const event =
+        result.event || {
+          eventId,
+          gameId: result.gameId,
+          homeTeamName:
+            result.homeTeamName,
+          awayTeamName:
+            result.awayTeamName,
+          startTime:
+            result.startTime
+        };
+
+      const markets = Array.isArray(
+        result.markets
+      )
+        ? result.markets
+        : [];
 
       eventMap.set(eventId, {
         event,
-        markets: Array.isArray(result.markets)
-          ? result.markets
-          : []
+        markets
       });
     }
 
     /*
-    ---------------------------------------------------------
-    4. NORMALIZE AVAILABLE SPORTYBET OPTIONS
-    ---------------------------------------------------------
+    =========================================================
+    4. FIND EVENTS WITH NO USABLE MARKETS
+    =========================================================
+
+    A batch result existing does NOT necessarily mean it
+    contains the actual market data.
+
+    Only request the individual endpoint for events that
+    need it.
+    =========================================================
     */
 
-    function getAvailableOptions(eventData) {
-      const output = [];
+    const missingMarketEvents = [];
 
-      if (!eventData) return output;
+    for (const eventId of eventIds) {
+      const existing =
+        eventMap.get(eventId);
+
+      if (
+        !existing ||
+        !Array.isArray(existing.markets) ||
+        existing.markets.length === 0
+      ) {
+        missingMarketEvents.push(
+          eventId
+        );
+      }
+    }
+
+    /*
+    =========================================================
+    5. LOAD MISSING EVENTS INDIVIDUALLY
+    =========================================================
+
+    Maximum is normally only a few requests because the
+    batch endpoint already supplied most events.
+
+    =========================================================
+    */
+
+    for (const eventId of missingMarketEvents) {
+      try {
+        const response = await fetch(
+          `${RENDER_API}/event-markets/${encodeURIComponent(
+            eventId
+          )}`
+        );
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data?.event &&
+          Array.isArray(data.markets)
+        ) {
+          eventMap.set(eventId, {
+            event: data.event,
+            markets: data.markets
+          });
+        }
+      } catch (error) {
+        console.log(
+          "Individual market request failed:",
+          eventId,
+          error.message
+        );
+      }
+    }
+
+    /*
+    =========================================================
+    6. NORMALIZE ACTIVE SPORTYBET OPTIONS
+    =========================================================
+    */
+
+    function getOptions(eventData) {
+      const options = [];
+
+      if (!eventData) return options;
 
       for (const market of eventData.markets || []) {
-        if (!market || !Array.isArray(market.outcomes)) {
+        if (
+          !market ||
+          !Array.isArray(
+            market.outcomes
+          )
+        ) {
           continue;
         }
 
         for (const outcome of market.outcomes) {
           if (!outcome) continue;
 
-          if (outcome.isActive === false) continue;
+          if (
+            outcome.isActive === false
+          ) {
+            continue;
+          }
 
-          const odds = Number(outcome.odds);
+          const odds =
+            Number(outcome.odds);
 
           if (
             !outcome.outcomeId ||
@@ -159,185 +248,356 @@ export default async function handler(req, res) {
             continue;
           }
 
-          output.push({
+          options.push({
             event:
               `${eventData.event.homeTeamName} vs ${eventData.event.awayTeamName}`,
 
-            market: market.market,
+            market:
+              market.market || "",
 
-            pick: outcome.pick,
+            pick:
+              outcome.pick || "",
 
             odds,
 
-            eventId: clean(eventData.event.eventId),
+            eventId:
+              clean(eventData.event.eventId),
 
-            gameId: clean(eventData.event.gameId),
+            gameId:
+              clean(eventData.event.gameId),
 
-            marketId: clean(market.marketId),
+            marketId:
+              clean(market.marketId),
 
-            specifier: clean(market.specifier),
+            specifier:
+              clean(market.specifier),
 
-            outcomeId: clean(outcome.outcomeId),
+            outcomeId:
+              clean(outcome.outcomeId),
 
-            startTime: eventData.event.startTime
+            startTime:
+              eventData.event.startTime
           });
         }
       }
 
-      return output;
+      return options;
     }
 
     /*
-    ---------------------------------------------------------
-    5. VERIFY ORIGINAL SELECTION
-    ---------------------------------------------------------
+    =========================================================
+    7. VERIFY ORIGINAL PICKS
+    =========================================================
     */
 
-    function findOriginal(selection, options) {
+    function verifyOriginal(
+      original,
+      options
+    ) {
       return (
         options.find(
           (option) =>
             clean(option.eventId) ===
-              clean(selection.eventId) &&
+              clean(original.eventId) &&
             clean(option.marketId) ===
-              clean(selection.marketId) &&
+              clean(original.marketId) &&
             clean(option.specifier) ===
-              clean(selection.specifier) &&
+              clean(original.specifier) &&
             clean(option.outcomeId) ===
-              clean(selection.outcomeId)
+              clean(original.outcomeId)
         ) || null
       );
     }
 
     /*
-    ---------------------------------------------------------
-    6. BUILD DATA FOR EVERY EVENT
-    ---------------------------------------------------------
+    =========================================================
+    8. BUILD COMPLETE EVENT LIST
+    =========================================================
     */
 
-    const eventDataList = [];
+    const completeEvents = [];
 
-    for (const selection of uniqueSelections) {
-      const eventId = clean(selection.eventId);
+    for (const original of uniqueSelections) {
+      const eventId =
+        clean(original.eventId);
 
-      const eventData = eventMap.get(eventId);
+      const eventData =
+        eventMap.get(eventId);
 
-      if (!eventData) continue;
+      if (!eventData) {
+        completeEvents.push({
+          eventId,
+          original,
+          eventData: null,
+          options: [],
+          verifiedOriginal: null
+        });
 
-      const options = getAvailableOptions(eventData);
+        continue;
+      }
 
-      const original = findOriginal(
-        selection,
-        options
-      );
+      const options =
+        getOptions(eventData);
 
-      eventDataList.push({
+      const verifiedOriginal =
+        verifyOriginal(
+          original,
+          options
+        );
+
+      completeEvents.push({
         eventId,
+        original,
         eventData,
         options,
-        original
+        verifiedOriginal
       });
     }
 
     /*
-    ---------------------------------------------------------
-    7. ORIGINAL VERIFIED SELECTIONS
-    ---------------------------------------------------------
+    =========================================================
+    9. SAFE / BALANCED / RISKY
+    =========================================================
     */
 
-    const verifiedOriginals = eventDataList
-      .map((item) => item.original)
-      .filter(Boolean);
+    const verifiedOriginals =
+      completeEvents
+        .map(
+          (item) =>
+            item.verifiedOriginal
+        )
+        .filter(Boolean);
 
-    /*
-    ---------------------------------------------------------
-    8. SAFE / BALANCED / RISKY
-    ---------------------------------------------------------
-    */
-
-    const sorted = [...verifiedOriginals].sort(
-      (a, b) => a.odds - b.odds
-    );
+    const sortedByOdds =
+      [...verifiedOriginals].sort(
+        (a, b) =>
+          Number(a.odds) -
+          Number(b.odds)
+      );
 
     const safeCount = Math.max(
       1,
-      Math.ceil(sorted.length * 0.5)
+      Math.ceil(
+        sortedByOdds.length * 0.5
+      )
     );
 
     const balancedCount = Math.max(
       1,
-      Math.ceil(sorted.length * 0.75)
+      Math.ceil(
+        sortedByOdds.length * 0.75
+      )
     );
 
-    const safeSelections = sorted.slice(
-      0,
-      safeCount
-    );
+    const safeSelections =
+      sortedByOdds.slice(
+        0,
+        safeCount
+      );
 
-    const balancedSelections = sorted.slice(
-      0,
-      balancedCount
-    );
+    const balancedSelections =
+      sortedByOdds.slice(
+        0,
+        balancedCount
+      );
 
-    const riskySelections = [...verifiedOriginals];
+    const riskySelections =
+      [...verifiedOriginals];
 
     /*
-    ---------------------------------------------------------
-    9. PREPARE COMPACT AI DATA
-    ---------------------------------------------------------
+    =========================================================
+    10. DETERMINISTIC AI FALLBACK
+    =========================================================
+
+    This is the important part.
+
+    We don't depend on Gemini to return every event.
+
+    For every game:
+
+    1. Use a verified Gemini pick if available.
+    2. Otherwise use a different real SportyBet option.
+    3. Otherwise use the verified original.
+    4. Otherwise use the first active SportyBet option.
+
+    =========================================================
     */
 
-    const aiEvents = eventDataList.map((item) => {
+    const preferredMarkets = [
+      "Double Chance",
+      "Over/Under",
+      "GG/NG",
+      "Draw No Bet",
+      "1X2",
+      "1X2 - 2UP",
+      "Asian Handicap",
+      "Handicap"
+    ];
+
+    function chooseFallback(item) {
+      if (!item.options.length) {
+        return null;
+      }
+
       /*
-      We don't need to send every single market to Gemini.
-      Send the first 40 verified active options.
+      Prefer a different market from the original.
       */
 
-      const options = item.options.slice(0, 40);
+      if (item.verifiedOriginal) {
+        for (const marketName of preferredMarkets) {
+          const alternative =
+            item.options.find(
+              (option) =>
+                clean(option.market)
+                  .toLowerCase() ===
+                  marketName.toLowerCase() &&
+                !(
+                  clean(
+                    option.marketId
+                  ) ===
+                    clean(
+                      item.verifiedOriginal
+                        .marketId
+                    ) &&
+                  clean(
+                    option.specifier
+                  ) ===
+                    clean(
+                      item.verifiedOriginal
+                        .specifier
+                    ) &&
+                  clean(
+                    option.outcomeId
+                  ) ===
+                    clean(
+                      item.verifiedOriginal
+                        .outcomeId
+                    )
+                )
+            );
 
-      return {
-        eventId: item.eventId,
+          if (alternative) {
+            return alternative;
+          }
+        }
 
-        event:
-          `${item.eventData.event.homeTeamName} vs ${item.eventData.event.awayTeamName}`,
+        /*
+        Any different verified option.
+        */
 
-        original: item.original,
+        const different =
+          item.options.find(
+            (option) =>
+              !(
+                clean(
+                  option.marketId
+                ) ===
+                  clean(
+                    item.verifiedOriginal
+                      .marketId
+                  ) &&
+                clean(
+                  option.specifier
+                ) ===
+                  clean(
+                    item.verifiedOriginal
+                      .specifier
+                  ) &&
+                clean(
+                  option.outcomeId
+                ) ===
+                  clean(
+                    item.verifiedOriginal
+                      .outcomeId
+                  )
+              )
+          );
 
-        availableOptions: options
-      };
-    });
+        if (different) {
+          return different;
+        }
+
+        /*
+        No alternative exists.
+        */
+
+        return item.verifiedOriginal;
+      }
+
+      /*
+      No verified original.
+      Use a real active SportyBet option.
+      */
+
+      for (
+        const marketName of preferredMarkets
+      ) {
+        const preferred =
+          item.options.find(
+            (option) =>
+              clean(option.market)
+                .toLowerCase() ===
+              marketName.toLowerCase()
+          );
+
+        if (preferred) {
+          return preferred;
+        }
+      }
+
+      return item.options[0];
+    }
 
     /*
-    ---------------------------------------------------------
-    10. ASK GEMINI
-    ---------------------------------------------------------
+    =========================================================
+    11. ASK GEMINI — OPTIONAL
+    =========================================================
     */
+
+    const aiEvents =
+      completeEvents
+        .filter(
+          (item) =>
+            item.options.length > 0
+        )
+        .map((item) => ({
+          eventId: item.eventId,
+
+          event:
+            `${item.eventData.event.homeTeamName} vs ${item.eventData.event.awayTeamName}`,
+
+          original:
+            item.verifiedOriginal,
+
+          availableOptions:
+            item.options.slice(0, 30)
+        }));
 
     let aiReturned = [];
 
-    if (GEMINI_KEY && aiEvents.length) {
+    if (
+      GEMINI_KEY &&
+      aiEvents.length
+    ) {
       const prompt = `
-You are analyzing a SportyBet football selection list.
+You are analyzing SportyBet football selections.
 
-IMPORTANT RULE:
-You MUST return EXACTLY ONE selection for EVERY event listed below.
-
-There are ${aiEvents.length} events.
+Return ONE selection for EVERY event below.
 
 Never skip an event.
 
-Every selection must come directly from that event's availableOptions.
+Every recommendation MUST come directly from the availableOptions for that event.
 
-Never invent:
-- event IDs
-- market IDs
-- outcome IDs
-- specifiers
+Never invent any:
+- eventId
+- marketId
+- specifier
+- outcomeId
 - odds
-- markets
-- picks
+- market
+- pick
 
-Return ONLY JSON in this format:
+Return JSON only:
 
 {
   "selections": [
@@ -351,14 +611,11 @@ Return ONLY JSON in this format:
   ]
 }
 
-STYLE:
-Sound like a knowledgeable football fan explaining the ticket.
+Use natural football-fan language.
 
-Keep reasons short and natural.
+Do not promise results.
 
-Do not claim that a selection is guaranteed.
-
-Do not invent team form, injuries or statistics.
+Do not invent statistics or team information.
 
 EVENTS:
 
@@ -374,7 +631,8 @@ ${JSON.stringify(aiEvents)}
             method: "POST",
 
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type":
+                "application/json"
             },
 
             body: JSON.stringify({
@@ -390,186 +648,252 @@ ${JSON.stringify(aiEvents)}
 
               generationConfig: {
                 temperature: 0.2,
-                responseMimeType: "application/json"
+
+                responseMimeType:
+                  "application/json"
               }
             })
           }
         );
 
         if (response.ok) {
-          const data = await response.json();
+          const data =
+            await response.json();
 
           let text =
-            data?.candidates?.[0]?.content?.parts?.[0]
+            data?.candidates?.[0]
+              ?.content?.parts?.[0]
               ?.text || "";
 
           text = text
-            .replace(/^```json/i, "")
-            .replace(/^```/, "")
-            .replace(/```$/, "")
+            .replace(
+              /^```json\s*/i,
+              ""
+            )
+            .replace(
+              /^```\s*/i,
+              ""
+            )
+            .replace(
+              /\s*```$/i,
+              ""
+            )
             .trim();
 
           try {
-            const parsed = JSON.parse(text);
+            const parsed =
+              JSON.parse(text);
 
-            if (Array.isArray(parsed?.selections)) {
-              aiReturned = parsed.selections;
+            if (
+              Array.isArray(
+                parsed?.selections
+              )
+            ) {
+              aiReturned =
+                parsed.selections;
             }
           } catch (error) {
             console.log(
-              "Gemini JSON error:",
+              "Gemini JSON parse error:",
               error.message
             );
           }
+        } else {
+          console.log(
+            "Gemini returned status:",
+            response.status
+          );
         }
       } catch (error) {
         console.log(
-          "Gemini request error:",
+          "Gemini request failed:",
           error.message
         );
       }
     }
 
     /*
-    ---------------------------------------------------------
-    11. VALIDATE AI PICKS
-    ---------------------------------------------------------
+    =========================================================
+    12. VALIDATE GEMINI PICKS
+    =========================================================
     */
 
-    const validatedMap = new Map();
+    const validatedAI =
+      new Map();
 
     for (const aiPick of aiReturned) {
-      if (!aiPick?.eventId) continue;
-
-      const item = eventDataList.find(
-        (eventItem) =>
-          clean(eventItem.eventId) ===
-          clean(aiPick.eventId)
-      );
-
-      if (!item) continue;
-
-      const verified = item.options.find(
-        (option) =>
-          clean(option.eventId) ===
-            clean(aiPick.eventId) &&
-          clean(option.marketId) ===
-            clean(aiPick.marketId) &&
-          clean(option.specifier) ===
-            clean(aiPick.specifier) &&
-          clean(option.outcomeId) ===
-            clean(aiPick.outcomeId)
-      );
-
-      if (!verified) continue;
-
-      if (validatedMap.has(item.eventId)) {
+      if (!aiPick?.eventId) {
         continue;
       }
 
-      validatedMap.set(item.eventId, {
-        ...verified,
+      const item =
+        completeEvents.find(
+          (eventItem) =>
+            clean(
+              eventItem.eventId
+            ) ===
+            clean(
+              aiPick.eventId
+            )
+        );
 
-        reason:
-          clean(aiPick.reason) ||
-          "This is a verified SportyBet option available for this game."
-      });
+      if (!item) continue;
+
+      const verified =
+        item.options.find(
+          (option) =>
+            clean(
+              option.eventId
+            ) ===
+              clean(
+                aiPick.eventId
+              ) &&
+            clean(
+              option.marketId
+            ) ===
+              clean(
+                aiPick.marketId
+              ) &&
+            clean(
+              option.specifier
+            ) ===
+              clean(
+                aiPick.specifier
+              ) &&
+            clean(
+              option.outcomeId
+            ) ===
+              clean(
+                aiPick.outcomeId
+              )
+        );
+
+      if (!verified) {
+        continue;
+      }
+
+      if (
+        validatedAI.has(
+          item.eventId
+        )
+      ) {
+        continue;
+      }
+
+      validatedAI.set(
+        item.eventId,
+        {
+          ...verified,
+
+          reason:
+            clean(
+              aiPick.reason
+            ) ||
+            "This is a verified SportyBet option available for this game."
+        }
+      );
     }
 
     /*
-    ---------------------------------------------------------
-    12. GUARANTEE ONE SELECTION PER EVENT
-    ---------------------------------------------------------
+    =========================================================
+    13. BUILD FINAL AI RECOMMENDED
+    =========================================================
     */
 
     const finalAISelections = [];
 
-    for (const item of eventDataList) {
+    for (const item of completeEvents) {
       /*
-      First choice:
-      Validated Gemini recommendation.
+      A. Valid Gemini selection
       */
 
-      if (validatedMap.has(item.eventId)) {
+      if (
+        validatedAI.has(
+          item.eventId
+        )
+      ) {
         finalAISelections.push(
-          validatedMap.get(item.eventId)
+          validatedAI.get(
+            item.eventId
+          )
         );
 
         continue;
       }
 
       /*
-      Second choice:
-      Find a genuine alternative market.
+      B. Deterministic SportyBet fallback
       */
 
-      let alternative = null;
+      const fallback =
+        chooseFallback(item);
 
-      if (item.original) {
-        alternative = item.options.find(
-          (option) =>
-            !(
-              clean(option.marketId) ===
-                clean(item.original.marketId) &&
-              clean(option.specifier) ===
-                clean(item.original.specifier) &&
-              clean(option.outcomeId) ===
-                clean(item.original.outcomeId)
+      if (fallback) {
+        let reason =
+          "This is a verified SportyBet option available for this game.";
+
+        if (
+          item.verifiedOriginal &&
+          clean(
+            fallback.marketId
+          ) ===
+            clean(
+              item.verifiedOriginal
+                .marketId
+            ) &&
+          clean(
+            fallback.specifier
+          ) ===
+            clean(
+              item.verifiedOriginal
+                .specifier
+            ) &&
+          clean(
+            fallback.outcomeId
+          ) ===
+            clean(
+              item.verifiedOriginal
+                .outcomeId
             )
-        );
-      }
+        ) {
+          reason =
+            "The original SportyBet pick was kept because no different verified option was available.";
+        } else if (
+          item.verifiedOriginal
+        ) {
+          reason =
+            "This is a different verified SportyBet option available for this game.";
+        }
 
-      /*
-      If a different verified market exists,
-      use it.
-      */
-
-      if (alternative) {
         finalAISelections.push({
-          ...alternative,
-
-          reason:
-            "This is a different verified SportyBet option available for this game."
-        });
-
-        continue;
-      }
-
-      /*
-      Final fallback:
-      verified original selection.
-      */
-
-      if (item.original) {
-        finalAISelections.push({
-          ...item.original,
-
-          reason:
-            "The original SportyBet pick was kept because it could be verified for this game."
-        });
-
-        continue;
-      }
-
-      /*
-      If there was no original but SportyBet supplied
-      an active market, use the first verified option.
-      */
-
-      if (item.options.length) {
-        finalAISelections.push({
-          ...item.options[0],
-
-          reason:
-            "This is a verified SportyBet option available for this game."
+          ...fallback,
+          reason
         });
       }
     }
 
     /*
-    ---------------------------------------------------------
-    13. RESPONSE
-    ---------------------------------------------------------
+    =========================================================
+    14. DIAGNOSTICS
+    =========================================================
+    */
+
+    const missingMarketEventIds =
+      completeEvents
+        .filter(
+          (item) =>
+            item.options.length ===
+            0
+        )
+        .map(
+          (item) =>
+            item.eventId
+        );
+
+    /*
+    =========================================================
+    15. FINAL RESPONSE
+    =========================================================
     */
 
     return res.status(200).json({
@@ -580,41 +904,53 @@ ${JSON.stringify(aiEvents)}
           summary:
             "I’ve trimmed this down to the less aggressive picks.",
 
-          selections: safeSelections
+          selections:
+            safeSelections
         },
 
         BALANCED: {
           summary:
             "A middle-ground mix — not too cautious, not too aggressive.",
 
-          selections: balancedSelections
+          selections:
+            balancedSelections
         },
 
         RISKY: {
           summary:
             "This keeps more of the action, but there’s less room for mistakes.",
 
-          selections: riskySelections
+          selections:
+            riskySelections
         },
 
         "AI RECOMMENDED": {
           summary:
             "I checked the available SportyBet markets and picked one option for each game.",
 
-          selections: finalAISelections
+          selections:
+            finalAISelections
         }
       },
 
       diagnostics: {
-        receivedSelections: selections.length,
+        receivedSelections:
+          selections.length,
 
-        requestedEvents: uniqueSelections.length,
+        requestedEvents:
+          uniqueSelections.length,
 
-        sportBetEventsReturned:
-          marketResponse.results.length,
+        batchEventsReturned:
+          batchData.results.length,
+
+        individualMarketRequests:
+          missingMarketEvents.length,
 
         usableEvents:
-          eventDataList.length,
+          completeEvents.filter(
+            (item) =>
+              item.options.length > 0
+          ).length,
 
         verifiedOriginals:
           verifiedOriginals.length,
@@ -623,17 +959,17 @@ ${JSON.stringify(aiEvents)}
           aiReturned.length,
 
         aiValidated:
-          validatedMap.size,
+          validatedAI.size,
 
         aiFinalSelections:
           finalAISelections.length,
 
-        requestedEventIds:
-          eventIds,
+        missingMarketEventIds,
 
         finalAIEventIds:
           finalAISelections.map(
-            (item) => item.eventId
+            (item) =>
+              item.eventId
           )
       }
     });
@@ -645,8 +981,10 @@ ${JSON.stringify(aiEvents)}
 
     return res.status(500).json({
       success: false,
-      error: "Optimizer server error",
-      details: error.message
+      error:
+        "Optimizer server error",
+      details:
+        error.message
     });
   }
-}
+    }
